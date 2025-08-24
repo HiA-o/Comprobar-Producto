@@ -2,6 +2,8 @@
 
 Aplicación web que permite analizar la saludabilidad de productos alimenticios utilizando la **API de Open Food Facts**.  
 Introduce un **código de barras (EAN)** o una **URL de producto**, y la app generará una **nota de saludabilidad (1 a 10)** basada en diversos factores nutricionales.
+> Puedes probar la herramienta en vivo aquí:  
+> **[🔗 Comprobar Producto - Demo en Vivo](https://hia-o.github.io/Comprobar-Producto/)**
 
 ---
 
