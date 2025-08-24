@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Analizador de Open Food Facts — Saludabilidad rápida</title>
+  <style>
+    :root{
+      --bg:#0b1020; --card:#131a33; --muted:#9aa3b2; --accent:#7cd992; --bad:#ef6262; --warn:#ffb020; --ok:#6cb4ff; --good:#7ee081;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif; background:linear-gradient(180deg,#0b1020 0%,#0f1530 100%); color:#e5eef7}
+    header{padding:24px 16px 8px; text-align:center}
+    h1{margin:0; font-size:clamp(22px,3.8vw,34px); letter-spacing:.4px}
+    p.sub{margin:.3rem 0 0; color:var(--muted)}
+    main{max-width:1100px; margin:18px auto 56px; padding:0 14px;}
+
+    .panel{display:grid; gap:14px; grid-template-columns:1.3fr .7fr}
+    @media(max-width:980px){.panel{grid-template-columns:1fr}}
+
+    .card{background:var(--card); border:1px solid #243056; border-radius:16px; box-shadow:0 10px 30px rgba(5,10,30,.45);}
+    .card h2{font-size:18px; margin:0 0 8px}
+    .card .inner{padding:16px}
+
+    label{display:block; font-size:13px; color:var(--muted); margin-bottom:6px}
+    input[type=text]{width:100%; padding:12px 14px; border-radius:12px; border:1px solid #33406a; background:#0b1328; color:#e5eef7; outline:none}
+    input[type=text]::placeholder{color:#7b86a6}
+    .row{display:flex; gap:8px; align-items:center}
+    .row > *{flex:1}
+    button{appearance:none; border:none; cursor:pointer; border-radius:12px; padding:12px 14px; font-weight:600; letter-spacing:.2px; background:#1e2a52; color:#e5eef7; border:1px solid #2a3a6d}
+    button:hover{filter:brightness(1.08)}
+    .primary{background:linear-gradient(180deg,#2d6df6,#1f59cf); border-color:#1c4aa9}
+    .ghost{background:transparent}
+    .chip{display:inline-flex; align-items:center; gap:6px; font-size:12px; color:#c8d1e3; padding:6px 10px; border-radius:999px; background:#0e1530; border:1px solid #2c3a6a}
+
+    .scoreWrap{display:flex; gap:14px; align-items:center; flex-wrap:wrap}
+    .score{font-size:42px; font-weight:800}
+    .score.bad{color:var(--bad)}
+    .score.ok{color:var(--warn)}
+    .score.good{color:var(--good)}
+    .tag{font-weight:700; color:#a9b4c9}
+
+    .grid{display:grid; gap:10px; grid-template-columns:repeat(2,minmax(0,1fr))}
+    @media(max-width:700px){.grid{grid-template-columns:1fr}}
+
+    .kv{display:flex; justify-content:space-between; gap:10px; padding:9px 12px; border-radius:12px; background:#0c1530; border:1px solid #25335f}
+    .kv .k{color:#a4afc8; font-size:12px}
+    .kv .v{font-weight:700}
+
+    .list{display:grid; gap:10px}
+    .pill{padding:10px 12px; border-radius:12px; background:#0c1530; border:1px solid #273768;}
+    .pill .title{font-weight:700}
+    .pill.small{font-size:13px;}
+
+    .warn{color:var(--warn)} .bad{color:var(--bad)} .good{color:var(--good)} .muted{color:var(--muted)}
+
+    .flex{display:flex; gap:12px; align-items:center; flex-wrap:wrap}
+    .flex-col{display:flex; flex-direction:column; gap:10px}
+
+    .divider{height:1px; background:#25335f; margin:10px 0}
+    .foot{font-size:12px; color:#9aa8c2; text-align:center; margin-top:18px}
+
+    .tiny{font-size:12px; color:#9db0cf}
+    .tooltip{border-bottom:1px dotted #7385af; cursor:help}
+    .right{justify-content:flex-end}
+
+    .scorebar{height:12px; border-radius:999px; background:#0b1328; border:1px solid #33406a; position:relative; overflow:hidden}
+    .scorebar > i{position:absolute; left:0; top:0; bottom:0; width:0; background:linear-gradient(90deg,#ef6262,#ffb020,#7ee081)}
+
+    .badge{font-size:11px; padding:4px 8px; border-radius:999px; border:1px solid #2b3967; background:#0c1530; color:#c9d2e7}
+
+    .notes{white-space:pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; font-size:12px; background:#0a1226; border:1px dashed #2d3d71; padding:10px; border-radius:12px}
+
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Analizador rápido de productos — Open Food Facts</h1>
+    <p class="sub">Pega el código de barras o la URL de <b>OpenFoodFacts</b>, y te doy un resumen + <span class="tooltip" title="Reglas heurísticas basadas en azúcar, grasas, sal, NOVA, aditivos y otros">nota de saludabilidad</span>.</p>
+  </header>
+  <main>
+    <section class="panel">
+      <div class="card">
+        <div class="inner">
+          <h2>Entrada</h2>
+          <label for="input">Código de barras (EAN) o URL del producto</label>
+          <div class="row">
+            <input id="input" type="text" placeholder="Ej.: 8410100082930 o https://es.openfoodfacts.org/producto/8410100082930" />
+            <button class="primary" id="go">Analizar</button>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button id="demoYogurt" class="ghost">Probar con Yogur fresa (demo)</button>
+            <button id="demoNatillas" class="ghost">Probar con Natillas (demo)</button>
+            <button id="demoGalletas" class="ghost">Probar con Galletas (demo)</button>
+          </div>
+          <div class="row" style="margin-top:10px">
+            <span class="chip"><input type="checkbox" id="strict"/> <label for="strict" style="margin:0; cursor:pointer">Modo estricto (penaliza más azúcar y NOVA 4)</label></span>
+            <span class="chip"><input type="checkbox" id="useNutri" checked/> <label for="useNutri" style="margin:0; cursor:pointer">Usar Nutri-Score si existe</label></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="inner">
+          <h2>Nota de saludabilidad</h2>
+          <div class="scoreWrap">
+            <div class="score bad" id="score">—</div>
+            <div>
+              <div id="scoreLabel" class="tag">—</div>
+              <div class="scorebar" style="margin-top:6px"><i id="scoreBar"></i></div>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="grid">
+            <div class="kv"><div class="k">Nutri-Score</div><div class="v" id="nutri">—</div></div>
+            <div class="kv"><div class="k">NOVA (procesado)</div><div class="v" id="nova">—</div></div>
+            <div class="kv"><div class="k">Aditivos</div><div class="v" id="additivesCount">—</div></div>
+            <div class="kv"><div class="k">Azúcares /100g</div><div class="v" id="sugars">—</div></div>
+            <div class="kv"><div class="k">Grasas sat. /100g</div><div class="v" id="sats">—</div></div>
+            <div class="kv"><div class="k">Sal /100g</div><div class="v" id="salt">—</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:14px">
+      <div class="inner">
+        <div class="flex right"><button id="copy" class="ghost">Copiar resumen</button></div>
+        <div class="flex">
+          <img id="img" alt="imagen" style="width:86px; height:86px; object-fit:cover; border-radius:12px; border:1px solid #2a3966; background:#0a1226;"/>
+          <div>
+            <div style="font-weight:800; font-size:20px" id="title">—</div>
+            <div class="tiny" id="brand">—</div>
+            <div class="tiny" id="cat">—</div>
+            <div class="flex" style="margin-top:6px; gap:6px">
+              <span id="nutriBadge" class="badge" style="display:none"></span>
+              <span id="novaBadge" class="badge" style="display:none"></span>
+              <span id="ecoBadge" class="badge" style="display:none"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="divider"></div>
+        <h2>Señales clave</h2>
+        <div class="grid">
+          <div class="pill"><div class="title">Ingredientes</div><div class="muted" id="ing">—</div></div>
+          <div class="pill"><div class="title">Nutrientes /100g</div><div class="muted" id="nutr"></div></div>
+        </div>
+
+        <div class="divider"></div>
+        <h2>Aditivos y evaluación</h2>
+        <div class="list" id="additivesList"><div class="muted">—</div></div>
+
+        <div class="divider"></div>
+        <h2>Motivos de la nota</h2>
+        <div class="list" id="reasons"><div class="muted">—</div></div>
+
+        <div class="divider"></div>
+        <details>
+          <summary class="tiny">Depuración (detalles técnicos)</summary>
+          <pre class="notes" id="debug">—</pre>
+        </details>
+        <p class="foot">Fuente de datos: Open Food Facts (API pública). Esta app no almacena nada.</p>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const $ = s => document.querySelector(s);
+    const fmt = n => (n==null || isNaN(n)) ? '—' : (Math.round(n*10)/10).toString();
+    const clamp = (x,a,b)=>Math.min(Math.max(x,a),b);
+
+    const controversial = {
+      // Penalizaciones suaves/medias por señales controvertidas
+      'en:e223': { level:'media', note:'Conservante (sulfitos). Puede causar reacciones en sensibles.' },
+      'en:e150d': { level:'media', note:'Colorante caramelo con amonio-sulfitos. Asociado a subproductos no deseables en altas dosis.' },
+      'en:e407': { level:'media', note:'Carragenanos: espesante controvertido; precaución si consumo frecuente.' },
+      'en:e950': { level:'media', note:'Acesulfamo K (edulcorante); favorece preferencia por lo dulce.' },
+      'en:e951': { level:'media', note:'Aspartamo (edulcorante). Revisado por EFSA; uso dentro de IDA, pero mejor limitar.' },
+      'en:e954': { level:'media', note:'Sacarina (edulcorante). Sabor residual; usar ocasionalmente.' },
+      'en:e621': { level:'baja', note:'Glutamato monosódico (potenciador del sabor). Seguro en IDA; puede indicar ultraprocesado.' },
+      'en:e250': { level:'alta', note:'Nitrito sódico en cárnicos. Mejor reducir exposición.' },
+      'en:e251': { level:'media', note:'Nitrato sódico; precursor de nitritos.' }
+    };
+
+    // Cargamos diccionario de aditivos (taxonomía) una vez por sesión
+    let additivesTaxonomy = null;
+    async function loadAdditivesTaxonomy(){
+      if(additivesTaxonomy) return additivesTaxonomy;
+      try{
+        const res = await fetch('https://static.openfoodfacts.org/data/taxonomies/additives.json', {mode:'cors'});
+        additivesTaxonomy = await res.json();
+      }catch(e){
+        console.warn('No se pudo cargar la taxonomía de aditivos', e);
+        additivesTaxonomy = {}; // fallback vacío
+      }
+      return additivesTaxonomy;
+    }
+
+    function tagToEcode(tag){ // 'en:e223' -> 'E223'
+      if(!tag) return '';
+      const code = tag.split(':').pop().toUpperCase();
+      return code.startsWith('E')? code : ('E'+code);
+    }
+
+    function gradeColor(score){
+      if(score>=8) return 'good';
+      if(score>=6) return 'ok';
+      return 'bad';
+    }
+
+    function percentBar(score){ return (score/10*100).toFixed(1)+'%'; }
+
+    // Heurística de puntuación revisada (v2)
+    function computeHealthScore(p, opts){
+      const o = { strict: !!opts?.strict, useNutri: !!opts?.useNutri };
+      const N = p.nutriments||{};
+      const sugars = N.sugars_100g ?? N.sugars ?? null;
+      const sat = N['saturated-fat_100g'] ?? N['saturated-fat'] ?? null;
+      const salt = N.salt_100g ?? N.salt ?? (N.sodium_100g ? N.sodium_100g*2.5 : null);
+      const fiber = N.fiber_100g ?? N.fiber ?? null;
+      const protein = N.proteins_100g ?? N.proteins ?? null;
+      const energyKcal = N['energy-kcal_100g'] ?? (N.energy_100g ? N.energy_100g*0.239006 : null);
+      const nova = p.nova_group || p.nova_groups || null;
+
+      let score = 10;
+      const reasons = [];
+
+      // 1) NOVA (procesado)
+      if(nova){
+        if(nova==4){ score -= o.strict? 2.5: 2; reasons.push(`NOVA 4 (ultraprocesado) → −${o.strict?2.5:2}`); }
+        else if(nova==3){ score -= 1.2; reasons.push('NOVA 3 (procesado) → −1.2'); }
+        else if(nova==2){ score -= .2; reasons.push('NOVA 2 (mínimo procesado) → −0.2'); }
+      }
+
+      // 2) Azúcares (g/100g)
+      if(sugars!=null){
+        if(sugars>12){ score -= o.strict? 3.2: 2.8; reasons.push(`Azúcar ${fmt(sugars)} g/100g → −${o.strict?3.2:2.8}`); }
+        else if(sugars>8){ score -= 2.0; reasons.push(`Azúcar ${fmt(sugars)} g/100g → −2.0`); }
+        else if(sugars>5){ score -= 1.2; reasons.push(`Azúcar ${fmt(sugars)} g/100g → −1.2`); }
+        else if(sugars===0){ score += .4; reasons.push('Sin azúcares → +0.4'); }
+      }
+
+      // 3) Grasas saturadas
+      if(sat!=null){
+        if(sat>8){ score -= 2.0; reasons.push(`Grasas sat. ${fmt(sat)} g/100g → −2.0`); }
+        else if(sat>5){ score -= 1.0; reasons.push(`Grasas sat. ${fmt(sat)} g/100g → −1.0`); }
+        else if(sat<=1){ score += .2; reasons.push('Grasas sat. bajas → +0.2'); }
+      }
+
+      // 4) Sal
+      if(salt!=null){
+        if(salt>1.5){ score -= 1.5; reasons.push(`Sal ${fmt(salt)} g/100g → −1.5`); }
+        else if(salt>0.9){ score -= 0.8; reasons.push(`Sal ${fmt(salt)} g/100g → −0.8`); }
+        else if(salt<0.12){ score += .2; reasons.push('Sal muy baja → +0.2'); }
+      }
+
+      // 5) Fibra, proteína (compensaciones positivas)
+      if(fiber!=null){ if(fiber>=6){ score += .8; reasons.push('Fibra ≥6 g/100g → +0.8'); } else if(fiber>=3){ score += .4; reasons.push('Fibra ≥3 g/100g → +0.4'); } }
+      if(protein!=null){ if(protein>=8){ score += .5; reasons.push('Proteína ≥8 g/100g → +0.5'); } else if(protein<3){ score -= .4; reasons.push('Proteína baja → −0.4'); } }
+
+      // 6) Fruta/verdura estimada (si OFF la aporta)
+      const fvn = p['fruits-vegetables-nuts_100g'] ?? p.fruits_vegetables_nuts_estimate_100g ?? null;
+      if(fvn!=null){ if(fvn>=40){ score += .4; reasons.push('Buena proporción de FVH → +0.4'); } else if(fvn===0){ score -= .6; reasons.push('0% fruta/verdura/nueces → −0.6'); } }
+
+      // 7) Aditivos
+      const adds = (p.additives_tags||[]);
+      if(adds.length>=6){ score -= 1.6; reasons.push(`Muchos aditivos (${adds.length}) → −1.6`); }
+      else if(adds.length>=3){ score -= .8; reasons.push(`Varios aditivos (${adds.length}) → −0.8`); }
+      // Penalización por aditivos controvertidos
+      let controversialHits = 0; let highFlag=false;
+      for(const t of adds){ if(controversial[t]){ controversialHits++; if(controversial[t].level==='alta'){ score -= 1.0; highFlag=true; } else { score -= .5; } } }
+      if(controversialHits>0){ reasons.push(`Aditivos controvertidos: ${controversialHits}${highFlag?' (incluye ALTA)':''}`); }
+
+      // 8) Aromas sin respaldo de fruta real
+      const ingTxt = (p.ingredients_text_es||p.ingredients_text||'').toLowerCase();
+      if(ingTxt.includes('aroma')){
+        const hasFruitWord = /(fresa|frambuesa|manzana|plátano|banana|pera|melocotón|cacao|vainilla|limón|naranja|uva|fruta)/.test(ingTxt);
+        if(!hasFruitWord){ score -= .6; reasons.push('Aromas añadidos sin fruta destacada → −0.6'); }
+        else{ score -= .4; reasons.push('Aromas añadidos → −0.4'); }
+      }
+
+      // 9) Nutri-Score (suave, para alinear)
+      const nutriGrade = p.nutriscore_grade || p.nutrition_grades || p.nutrition_grade_fr || null;
+      if(o.useNutri && nutriGrade){
+        const g = (''+nutriGrade).toLowerCase();
+        const adj = { 'a': +0.6, 'b': +0.2, 'c': -0.6, 'd': -1.2, 'e': -1.8 }[g];
+        if(adj){ score += adj; reasons.push(`Nutri-Score ${g.toUpperCase()} → ${adj>0?'+':''}${adj}`); }
+      }
+
+      // Redondeo y límites
+      score = clamp(Math.round(score*10)/10, 1, 10);
+      let label = score>=8? 'Excelente para consumo habitual' : score>=6 ? 'Aceptable / consumo moderado' : score>=4 ? 'Ocasional' : 'Mejor evitar';
+
+      return { score, label, sugars, sat, salt, fiber, protein, energyKcal, nova, reasons };
+    }
+
+    function setScoreUI(s){
+      const el = $('#score'); el.textContent = s.score.toFixed(1);
+      el.classList.remove('bad','ok','good'); el.classList.add(gradeColor(s.score));
+      $('#scoreLabel').textContent = s.label;
+      $('#scoreBar').style.width = percentBar(s.score);
+      $('#sugars').textContent = s.sugars!=null ? `${fmt(s.sugars)} g` : '—';
+      $('#sats').textContent = s.sat!=null ? `${fmt(s.sat)} g` : '—';
+      $('#salt').textContent = s.salt!=null ? `${fmt(s.salt)} g` : '—';
+    }
+
+    function nutriBadge(g){ if(!g) return ''; const G=(''+g).toUpperCase(); return `Nutri-Score ${G}`; }
+    function novaBadge(n){ if(!n) return ''; return `NOVA ${n}`; }
+
+    function setBasicsUI(p){
+      $('#title').textContent = p.product_name_es || p.product_name || 'Producto sin nombre';
+      $('#brand').textContent = p.brands || '—';
+      $('#cat').textContent = p.categories || '—';
+      const img = p.image_small_url || p.image_url; $('#img').src = img || '';
+      const g = p.nutriscore_grade || p.nutrition_grades || p.nutrition_grade_fr;
+      const n = p.nova_group || p.nova_groups;
+      if(g){ $('#nutriBadge').style.display='inline-block'; $('#nutriBadge').textContent = nutriBadge(g); } else $('#nutriBadge').style.display='none';
+      if(n){ $('#novaBadge').style.display='inline-block'; $('#novaBadge').textContent = novaBadge(n); } else $('#novaBadge').style.display='none';
+      // Nutrientes list
+      const N = p.nutriments||{};
+      $('#nutr').innerHTML = [
+        N['energy-kcal_100g']?`Energía: ${fmt(N['energy-kcal_100g'])} kcal`:(N.energy_100g?`Energía: ${fmt(N.energy_100g*0.239)} kcal`:null),
+        N.fat_100g!=null?`Grasa: ${fmt(N.fat_100g)} g`:null,
+        N['saturated-fat_100g']!=null?`Sat.: ${fmt(N['saturated-fat_100g'])} g`:null,
+        N.carbohydrates_100g!=null?`Hidratos: ${fmt(N.carbohydrates_100g)} g`:null,
+        N.sugars_100g!=null?`Azúcares: ${fmt(N.sugars_100g)} g`:null,
+        N.fiber_100g!=null?`Fibra: ${fmt(N.fiber_100g)} g`:null,
+        N.proteins_100g!=null?`Proteínas: ${fmt(N.proteins_100g)} g`:null,
+        (N.salt_100g!=null?`Sal: ${fmt(N.salt_100g)} g`:(N.sodium_100g!=null?`Sodio: ${fmt(N.sodium_100g)} g`:'') )
+      ].filter(Boolean).join(' · ');
+      $('#ing').textContent = (p.ingredients_text_es||p.ingredients_text||'—');
+
+      // Nutri-Score/NOVA cajas
+      const nutri = g?`<span>${nutriBadge(g)}</span>`:'—';
+      const nova = n?`<span>${novaBadge(n)}</span>`:'—';
+      $('#nutri').textContent = nutri.replace(/<[^>]+>/g,'');
+      $('#nova').textContent = nova.replace(/<[^>]+>/g,'');
+      $('#additivesCount').textContent = (p.additives_tags||[]).length;
+    }
+
+    async function setAdditivesUI(p){
+      const list = $('#additivesList'); list.innerHTML = '';
+      const tags = p.additives_tags || [];
+      if(tags.length===0){ list.innerHTML = '<div class="muted">Sin aditivos declarados.</div>'; return; }
+      const tax = await loadAdditivesTaxonomy();
+      for(const t of tags){
+        const info = tax[t] || {};
+        const name = (info.name_es||info.name_es_es||info.name_en||info.name_fr||{});
+        const disp = typeof name==="string" ? name : (name?.es||name?.en||name?.fr||name?.es_es|| tagToEcode(t));
+        const risk = info.efsa_evaluation_overexposure_risk || info.efsa_evaluation || null;
+        const veg = (info.vegan||info.vegetarian||null);
+        const cont = controversial[t];
+        const extra = [];
+        if(veg){ extra.push(`Apto: ${typeof veg==="string"?veg:JSON.stringify(veg)}`); }
+        if(risk){ extra.push(`EFSA: ${typeof risk==="string"?risk:JSON.stringify(risk)}`); }
+        if(cont){ extra.push(`Nota: ${cont.note}`); }
+        const html = `<div class="pill small"><div class="title">${tagToEcode(t)} — ${disp||tagToEcode(t)}</div><div class="tiny">${extra.join(' · ')||'—'}</div></div>`;
+        list.insertAdjacentHTML('beforeend', html);
+      }
+    }
+
+    function setReasonsUI(r){
+      const box = $('#reasons'); box.innerHTML = '';
+      r.forEach(x=>{ box.insertAdjacentHTML('beforeend', `<div class="pill small">${x}</div>`); });
+      if(!r.length) box.innerHTML = '<div class="muted">—</div>';
+    }
+
+    function debugDump(p, s){
+      const N = p.nutriments||{};
+      const dbg = {
+        product: {
+          code: p.code, name: p.product_name, brands: p.brands, categories:p.categories, nutri: p.nutriscore_grade||p.nutrition_grades, nova:p.nova_group||p.nova_groups
+        },
+        nutriments: {
+          energy_kcal_100g: N['energy-kcal_100g']||null, energy_kj_100g: N.energy_100g||null,
+          fat_100g: N.fat_100g||null, sat_100g: N['saturated-fat_100g']||null, carbs_100g: N.carbohydrates_100g||null,
+          sugars_100g: N.sugars_100g||null, fiber_100g: N.fiber_100g||null, proteins_100g: N.proteins_100g||null, salt_100g: N.salt_100g||null,
+        },
+        additives_tags: p.additives_tags||[],
+        reasons: s.reasons,
+        score: s.score
+      };
+      $('#debug').textContent = JSON.stringify(dbg,null,2);
+    }
+
+    function parseCode(input){
+      input = (input||'').trim();
+      if(!input) return null;
+      // Si es URL, extraer el último bloque numérico largo
+      try{
+        if(input.startsWith('http')){
+          const u = new URL(input);
+          const m = u.pathname.match(/(\d{8,14})/);
+          if(m) return m[1];
+        }
+      }catch(e){}
+      // Si son sólo dígitos
+      const m2 = input.match(/^(\d{8,14})$/);
+      if(m2) return m2[1];
+      return null;
+    }
+
+    async function fetchProduct(code){
+      const url = `https://world.openfoodfacts.org/api/v2/product/${code}.json`;
+      const res = await fetch(url, {mode:'cors'});
+      if(!res.ok) throw new Error('No se pudo leer el producto');
+      const j = await res.json();
+      if(j.status!==1) throw new Error('Producto no encontrado en OFF');
+      return j.product;
+    }
+
+    async function run(code){
+      $('#score').textContent='…'; $('#scoreLabel').textContent='Calculando';
+      const p = await fetchProduct(code);
+      setBasicsUI(p);
+      const s = computeHealthScore(p, { strict: $('#strict').checked, useNutri: $('#useNutri').checked });
+      setScoreUI(s);
+      await setAdditivesUI(p);
+      setReasonsUI(s.reasons);
+      debugDump(p, s);
+    }
+
+    // Botones demo (códigos populares, puedes cambiarlos si no existen)
+    const samples = {
+      yogurt: '8410500101917', // Danone fresa (ejemplo; si no existe, pega el tuyo)
+      natillas: '8480000191104', // Hacendado natillas vainilla (ejemplo)
+      galletas: '8410036001003' // TostaRica (ejemplo)
+    };
+
+    $('#demoYogurt').onclick = ()=>{ $('#input').value = samples.yogurt; $('#go').click(); };
+    $('#demoNatillas').onclick = ()=>{ $('#input').value = samples.natillas; $('#go').click(); };
+    $('#demoGalletas').onclick = ()=>{ $('#input').value = samples.galletas; $('#go').click(); };
+
+    $('#go').onclick = async()=>{
+      const code = parseCode($('#input').value);
+      if(!code){ alert('Introduce un código EAN válido o una URL de OpenFoodFacts.'); return; }
+      try{ await run(code); }
+      catch(e){ alert(e.message||'Error'); console.error(e); }
+    };
+
+    $('#copy').onclick = ()=>{
+      const text = [
+        'Producto: '+($('#title').textContent||'—'),
+        'Marca: '+($('#brand').textContent||'—'),
+        'Categorías: '+($('#cat').textContent||'—'),
+        'Nota de saludabilidad: '+($('#score').textContent||'—')+'/10 ('+($('#scoreLabel').textContent||'')+')',
+        'Nutri-Score: '+($('#nutri').textContent||'—'),
+        'NOVA: '+($('#nova').textContent||'—'),
+        'Azúcares/100g: '+($('#sugars').textContent||'—'),
+        'Sat./100g: '+($('#sats').textContent||'—'),
+        'Sal/100g: '+($('#salt').textContent||'—'),
+        'Ingredientes: '+($('#ing').textContent||'—'),
+      ].join('\n');
+      navigator.clipboard.writeText(text);
+    };
+  </script>
+</body>
+</html>
