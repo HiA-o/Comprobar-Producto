@@ -106,31 +106,40 @@
       <h2>¿Cómo se calcula la nota de saludabilidad?</h2>
       <p>La puntuación de 1 a 10 es una heurística desarrollada para ofrecer una guía rápida sobre la saludabilidad de un producto. Se basa en una combinación de factores nutricionales, el grado de procesado del alimento y la presencia de aditivos.</p>
       
-      <h3>📈 Heurística de puntuación</h3>
-      <ul>
-        <li><strong>Puntuación base</strong>: 10</li>
-        <li><strong>Penalizaciones</strong>:</li>
-        <ul>
-          <li>NOVA (grado de procesado) → hasta -3.0</li>
-          <li>Azúcares → hasta -3.5</li>
-          <li>Grasas saturadas → hasta -2.5</li>
-          <li>Grasas trans → -4.0 (si las contiene)</li>
-          <li>Sal → hasta -2.5</li>
-          <li>Aditivos → hasta -2.3 (depende del número y nivel de riesgo)</li>
-          <li>Aromas sin fruta → hasta -0.8</li>
-          <li>Alto valor calórico → hasta -1.5</li>
-          <li>0% de fruta/verdura/nueces → -0.8</li>
-        </ul>
-        <li><strong>Bonificaciones</strong>:</li>
-        <ul>
-          <li>Fibra → hasta +1.0</li>
-          <li>Proteína → hasta +0.5</li>
-          <li>Buena proporción de FVH (frutas, verduras, frutos secos) → +0.6</li>
-          <li>Sin azúcares → +0.4</li>
-          <li>Nutri-Score → hasta +0.6</li>
-        </ul>
-        <li><strong>Rango final</strong>: de 1 a 10</li>
-      </ul>
+      <h2>¿Cómo se calcula la nota de saludabilidad?</h2>
+<p>La puntuación de 1 a 10 es una heurística desarrollada para ofrecer una guía rápida sobre la saludabilidad de un producto. Se basa en una combinación de factores nutricionales, el grado de procesado del alimento y la presencia de aditivos.</p>
+ 
+<h3>📈 Heurística de puntuación</h3>
+<ul>
+  <li><strong>Puntuación base</strong>: 10</li>
+  <li><strong>Penalizaciones</strong>:</li>
+  <ul>
+    <li>NOVA (grado de procesado) → hasta -3.0</li>
+    <li>Nutri-Score D/E → hasta -2.0</li>
+    <li>Azúcares → hasta -3.5</li>
+    <li>Grasas saturadas → hasta -2.5</li>
+    <li>Grasas trans → -4.0 (si las contiene)</li>
+    <li>Sal → hasta -2.2</li>
+    <li>Alto valor calórico → hasta -1.0</li>
+    <li>0% de fruta/verdura/nueces → -0.8</li>
+    <li>Aditivos → penalización por cantidad y riesgo.</li>
+    <li>Aromas sin fruta → hasta -0.8</li>
+    <li>Alcohol → -2.0</li>
+    <li>Cafeína → -1.0</li>
+  </ul>
+  <li><strong>Bonificaciones</strong>:</li>
+  <ul>
+    <li>Nutri-Score A/B → hasta +1.2</li>
+    <li>Energía muy baja (&le;50 kcal) → +0.5</li>
+    <li>Fibra → hasta +1.0</li>
+    <li>Proteína → hasta +0.5</li>
+    <li>Buena proporción de FVH (frutas, verduras, frutos secos) → +0.6</li>
+    <li>Sin azúcares → +0.4</li>
+    <li>Grasas saturadas muy bajas (&lt;1g) → +0.2</li>
+    <li>Micronutrientes (Calcio, Hierro, Vitamina C/D) → hasta +0.8</li>
+  </ul>
+  <li><strong>Rango final</strong>: de 1 a 10</li>
+</ul>
       
       <p>⚠️ <strong>Aviso importante</strong>: Esta herramienta es una guía. No sustituye la recomendación de un nutricionista ni es un consejo médico. La saludabilidad de un producto debe evaluarse en el contexto de una dieta completa y equilibrada.</p>
       
@@ -145,7 +154,12 @@
       <p>Aunque los datos de aditivos provienen de Open Food Facts, las notas y el riesgo asociado son un trabajo de investigación propio. Hemos creado una base de datos interna para ofrecerte información más clara y directa sobre los aditivos más comunes y controvertidos, basándonos en fuentes como la EFSA (Autoridad Europea de Seguridad Alimentaria) y otros estudios. Así evitamos la información genérica o poco útil que a veces aparece en la base de datos original.</p>
       
       <div class="divider"></div>
+           
+      <h2>¿Por qué la nota difiere de Yuka u otros sistemas?</h2>
+      <p>Cada app utiliza criterios distintos. <strong>Qué Como</strong> combina Nutri-Score, NOVA y un análisis propio de aditivos, fibra, proteínas, micronutrientes y aromas. Por eso los resultados pueden variar respecto a otras aplicaciones.</p>
       
+      <div class="divider"></div>
+
       <a href="index.html" class="back-link">← Volver a la página principal</a>
     </div>
   </main>
