@@ -256,10 +256,6 @@
           <button id="demoNatillas" class="ghost">Probar con Natillas 🍮</button>
           <button id="demoGalletas" class="ghost">Probar con Galletas 🍪</button>
         </div>
-        <div class="row" style="margin-top:1rem">
-          <span class="chip"><input type="checkbox" id="strict" /> <label for="strict" style="margin:0; cursor:pointer">Modo estricto</label></span>
-          <span class="chip"><input type="checkbox" id="useNutri" checked /> <label for="useNutri" style="margin:0; cursor:pointer">Usar Nutri-Score</label></span>
-        </div>
       </div>
       <div class="card">
         <h2>✨ Nota de saludabilidad</h2>
@@ -354,100 +350,103 @@
     const nutriBadge = g => g ? `Nutri-Score ${('' + g).toUpperCase()}` : '';
     const novaBadge = n => n ? `NOVA ${n}` : '';
 
-function computeHealthScore(p, opts) {
-  const o = { strict: !!opts?.strict, useNutri: !!opts?.useNutri };
-  const N = p.nutriments || {};
-  const sugars = N.sugars_100g ?? N.sugars ?? null;
-  const sat = N['saturated-fat_100g'] ?? N['saturated-fat'] ?? null;
-  const salt = N.salt_100g ?? N.salt ?? (N.sodium_100g ? N.sodium_100g * 2.5 : null);
-  const fiber = N.fiber_100g ?? N.fiber ?? null;
-  const protein = N.proteins_100g ?? N.proteins ?? null;
-  const nova = p.nova_group || p.nova_groups || null;
-  const kcal = N['energy-kcal_100g'] ?? N.energy_100g / 4.184 ?? null; // Usa kJ si kcal no está disponible
+    function computeHealthScore(p) {
+      const N = p.nutriments || {};
+      const sugars = N.sugars_100g ?? N.sugars ?? null;
+      const sat = N['saturated-fat_100g'] ?? N['saturated-fat'] ?? null;
+      const trans = N['trans-fat_100g'] ?? N['trans-fat'] ?? null;
+      const salt = N.salt_100g ?? N.salt ?? (N.sodium_100g ? N.sodium_100g * 2.5 : null);
+      const fiber = N.fiber_100g ?? N.fiber ?? null;
+      const protein = N.proteins_100g ?? N.proteins ?? null;
+      const nova = p.nova_group || p.nova_groups || null;
+      const kcal = N['energy-kcal_100g'] ?? N.energy_100g / 4.184 ?? null;
 
-  let score = 10;
-  const reasons = [];
+      let score = 10;
+      const reasons = [];
 
-  // Penalizaciones y bonificaciones
-  if (nova) {
-    if (nova == 4) { score -= o.strict ? 3.0 : 2.5; reasons.push(`NOVA 4 (ultraprocesado) → -${o.strict ? 3.0 : 2.5}`); }
-    else if (nova == 3) { score -= 1.5; reasons.push('NOVA 3 (procesado) → -1.5'); }
-    else if (nova == 2) { score -= 0.5; reasons.push('NOVA 2 (mínimo procesado) → -0.5'); }
-  }
-  if (sugars != null) {
-    if (sugars > 12) { score -= o.strict ? 3.5 : 3.0; reasons.push(`Azúcar ${fmt(sugars)} g/100g → -${o.strict ? 3.5 : 3.0}`); }
-    else if (sugars > 8) { score -= 2.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g → -2.5`); }
-    else if (sugars > 5) { score -= 1.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g → -1.5`); }
-    else if (sugars > 2) { score -= 0.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g → -0.5`); }
-    else if (sugars === 0) { score += 0.4; reasons.push('Sin azúcares → +0.4'); }
-  }
-  if (sat != null) {
-    if (sat > 8) { score -= 2.5; reasons.push(`Grasas sat. ${fmt(sat)} g/100g → -2.5`); }
-    else if (sat > 5) { score -= 1.5; reasons.push(`Grasas sat. ${fmt(sat)} g/100g → -1.5`); }
-    else if (sat > 2) { score -= 0.5; reasons.push(`Grasas sat. ${fmt(sat)} g/100g → -0.5`); }
-    else if (sat <= 1) { score += 0.2; reasons.push('Grasas sat. bajas → +0.2'); }
-  }
-  if (salt != null) {
-    if (salt > 1.5) { score -= 2.0; reasons.push(`Sal ${fmt(salt)} g/100g → -2.0`); }
-    else if (salt > 0.9) { score -= 1.2; reasons.push(`Sal ${fmt(salt)} g/100g → -1.2`); }
-    else if (salt > 0.6) { score -= 0.5; reasons.push(`Sal ${fmt(salt)} g/100g → -0.5`); }
-    else if (salt < 0.12) { score += 0.2; reasons.push('Sal muy baja → +0.2'); }
-  }
-  if (kcal != null) {
-    if (kcal > 400) { score -= 1.5; reasons.push(`Alto valor calórico (${fmt(kcal)} kcal/100g) → -1.5`); }
-    else if (kcal > 300) { score -= 0.8; reasons.push(`Valor calórico elevado (${fmt(kcal)} kcal/100g) → -0.8`); }
-  }
-  if (fiber != null) {
-    if (fiber >= 6) { score += 0.8; reasons.push('Fibra ≥6 g/100g → +0.8'); }
-    else if (fiber >= 3) { score += 0.4; reasons.push('Fibra ≥3 g/100g → +0.4'); }
-  }
-  if (protein != null) {
-    if (protein >= 8) { score += 0.5; reasons.push('Proteína ≥8 g/100g → +0.5'); }
-    else if (protein < 3) { score -= 0.4; reasons.push('Proteína baja → -0.4'); }
-  }
-  const fvn = p['fruits-vegetables-nuts_100g'] ?? p.fruits_vegetables_nuts_estimate_100g ?? null;
-  if (fvn != null) {
-    if (fvn >= 40) { score += 0.4; reasons.push('Buena proporción de FVH → +0.4'); }
-    else if (fvn === 0) { score -= 0.6; reasons.push('0% fruta/verdura/nueces → -0.6'); }
-  }
+      // Penalizaciones y bonificaciones
+      if (nova) {
+        if (nova == 4) { score -= 3.0; reasons.push(`NOVA 4 (ultraprocesado) → -3.0`); }
+        else if (nova == 3) { score -= 1.5; reasons.push('NOVA 3 (procesado) → -1.5'); }
+        else if (nova == 2) { score -= 0.5; reasons.push('NOVA 2 (mínimo procesado) → -0.5'); }
+      }
+      if (sugars != null) {
+        if (sugars > 12) { score -= 3.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g → -3.5`); }
+        else if (sugars > 8) { score -= 2.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g → -2.5`); }
+        else if (sugars > 5) { score -= 1.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g → -1.5`); }
+        else if (sugars > 2) { score -= 0.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g → -0.5`); }
+        else if (sugars === 0) { score += 0.4; reasons.push('Sin azúcares → +0.4'); }
+      }
+      if (sat != null) {
+        if (sat > 8) { score -= 2.5; reasons.push(`Grasas sat. ${fmt(sat)} g/100g → -2.5`); }
+        else if (sat > 5) { score -= 1.5; reasons.push(`Grasas sat. ${fmt(sat)} g/100g → -1.5`); }
+        else if (sat > 2) { score -= 0.5; reasons.push(`Grasas sat. ${fmt(sat)} g/100g → -0.5`); }
+        else if (sat <= 1) { score += 0.2; reasons.push('Grasas sat. bajas → +0.2'); }
+      }
+      if (trans != null && trans > 0.5) {
+        score -= 4.0;
+        reasons.push(`Grasas trans (${fmt(trans)} g/100g) → -4.0`);
+      }
+      if (salt != null) {
+        if (salt > 1.5) { score -= 2.5; reasons.push(`Sal ${fmt(salt)} g/100g → -2.5`); }
+        else if (salt > 0.9) { score -= 1.5; reasons.push(`Sal ${fmt(salt)} g/100g → -1.5`); }
+        else if (salt > 0.6) { score -= 0.5; reasons.push(`Sal ${fmt(salt)} g/100g → -0.5`); }
+        else if (salt < 0.12) { score += 0.2; reasons.push('Sal muy baja → +0.2'); }
+      }
+      if (kcal != null) {
+        if (kcal > 400) { score -= 1.5; reasons.push(`Alto valor calórico (${fmt(kcal)} kcal/100g) → -1.5`); }
+        else if (kcal > 300) { score -= 0.8; reasons.push(`Valor calórico elevado (${fmt(kcal)} kcal/100g) → -0.8`); }
+      }
+      if (fiber != null) {
+        if (fiber >= 6) { score += 1.0; reasons.push('Fibra ≥6 g/100g → +1.0'); }
+        else if (fiber >= 3) { score += 0.5; reasons.push('Fibra ≥3 g/100g → +0.5'); }
+      }
+      if (protein != null) {
+        if (protein >= 8) { score += 0.5; reasons.push('Proteína ≥8 g/100g → +0.5'); }
+        else if (protein < 3) { score -= 0.4; reasons.push('Proteína baja → -0.4'); }
+      }
+      const fvn = p['fruits-vegetables-nuts_100g'] ?? p.fruits_vegetables_nuts_estimate_100g ?? null;
+      if (fvn != null) {
+        if (fvn >= 40) { score += 0.6; reasons.push('Buena proporción de FVH → +0.6'); }
+        else if (fvn === 0) { score -= 0.8; reasons.push('0% fruta/verdura/nueces → -0.8'); }
+      }
 
-  const adds = p.additives_tags || [];
-  if (adds.length >= 6) { score -= 2.0; reasons.push(`Muchos aditivos (${adds.length}) → -2.0`); }
-  else if (adds.length >= 3) { score -= 1.0; reasons.push(`Varios aditivos (${adds.length}) → -1.0`); }
-  let controversialHits = 0;
-  let highFlag = false;
-  for (const t of adds) {
-    if (controversial[t]) {
-      controversialHits++;
-      if (controversial[t].level === 'alta') { score -= 1.5; highFlag = true; }
-      else { score -= 0.8; }
+      const adds = p.additives_tags || [];
+      if (adds.length >= 6) { score -= 2.0; reasons.push(`Muchos aditivos (${adds.length}) → -2.0`); }
+      else if (adds.length >= 3) { score -= 1.0; reasons.push(`Varios aditivos (${adds.length}) → -1.0`); }
+      let controversialHits = 0;
+      let highFlag = false;
+      for (const t of adds) {
+        if (controversial[t]) {
+          controversialHits++;
+          if (controversial[t].level === 'alta') { score -= 1.5; highFlag = true; }
+          else { score -= 0.8; }
+        }
+      }
+      if (controversialHits > 0) { reasons.push(`Aditivos controvertidos: ${controversialHits}${highFlag ? ' (incluye ALTA)' : ''}`); }
+      
+      const ingTxt = (p.ingredients_text_es || p.ingredients_text || '').toLowerCase();
+      if (ingTxt.includes('aroma')) {
+        const hasFruitWord = /(fresa|frambuesa|manzana|plátano|banana|pera|melocotón|cacao|vainilla|limón|naranja|uva|fruta)/.test(ingTxt);
+        if (!hasFruitWord) { score -= 0.8; reasons.push('Aromas añadidos sin fruta destacada → -0.8'); }
+        else { score -= 0.5; reasons.push('Aromas añadidos → -0.5'); }
+      }
+      
+      const nutriGrade = p.nutriscore_grade || p.nutrition_grades || p.nutrition_grade_fr || null;
+      if (nutriGrade) {
+        const g = ('' + nutriGrade).toLowerCase();
+        const adj = { 'a': '+0.6', 'b': '+0.2', 'c': '-0.6', 'd': '-1.2', 'e': '-1.8' }[g];
+        if (adj) { reasons.push(`Nutri-Score ${g.toUpperCase()} → ${adj}`); }
+      }
+
+      score = clamp(Math.round(score * 10) / 10, 1, 10);
+      let label = 'Mejor evitar';
+      if (score >= 8) label = 'Excelente para consumo habitual';
+      else if (score >= 6) label = 'Aceptable / consumo moderado';
+      else if (score >= 4) label = 'Ocasional';
+
+      return { score, label, sugars, sat, salt, fiber, protein, nova, reasons };
     }
-  }
-  if (controversialHits > 0) { reasons.push(`Aditivos controvertidos: ${controversialHits}${highFlag ? ' (incluye ALTA)' : ''}`); }
-  
-  const ingTxt = (p.ingredients_text_es || p.ingredients_text || '').toLowerCase();
-  if (ingTxt.includes('aroma')) {
-    const hasFruitWord = /(fresa|frambuesa|manzana|plátano|banana|pera|melocotón|cacao|vainilla|limón|naranja|uva|fruta)/.test(ingTxt);
-    if (!hasFruitWord) { score -= 0.8; reasons.push('Aromas añadidos sin fruta destacada → -0.8'); }
-    else { score -= 0.5; reasons.push('Aromas añadidos → -0.5'); }
-  }
-  
-  const nutriGrade = p.nutriscore_grade || p.nutrition_grades || p.nutrition_grade_fr || null;
-  if (o.useNutri && nutriGrade) {
-    const g = ('' + nutriGrade).toLowerCase();
-    const adj = { 'a': +0.6, 'b': +0.2, 'c': -0.6, 'd': -1.2, 'e': -1.8 }[g];
-    if (adj) { score += adj; reasons.push(`Nutri-Score ${g.toUpperCase()} → ${adj > 0 ? '+' : ''}${adj}`); }
-  }
-
-  score = clamp(Math.round(score * 10) / 10, 1, 10);
-  let label = 'Mejor evitar';
-  if (score >= 8) label = 'Excelente para consumo habitual';
-  else if (score >= 6) label = 'Aceptable / consumo moderado';
-  else if (score >= 4) label = 'Ocasional';
-
-  return { score, label, sugars, sat, salt, fiber, protein, nova, reasons };
-}
-
 
     function updateUI(p, s) {
       // Score section
@@ -486,6 +485,7 @@ $('#ing').textContent = cleanedIngredients;
         N['energy-kcal_100g'] ? `Energía: ${fmt(N['energy-kcal_100g'])} kcal` : null,
         N.fat_100g != null ? `Grasa: ${fmt(N.fat_100g)} g` : null,
         N['saturated-fat_100g'] != null ? `Sat.: ${fmt(N['saturated-fat_100g'])} g` : null,
+        N['trans-fat_100g'] != null ? `Trans.: ${fmt(N['trans-fat_100g'])} g` : null,
         N.carbohydrates_100g != null ? `Hidratos: ${fmt(N.carbohydrates_100g)} g` : null,
         N.sugars_100g != null ? `Azúcares: ${fmt(N.sugars_100g)} g` : null,
         N.fiber_100g != null ? `Fibra: ${fmt(N.fiber_100g)} g` : null,
@@ -583,10 +583,10 @@ $('#ing').textContent = cleanedIngredients;
       $('#scoreLabel').textContent = 'Calculando';
       try {
         const p = await fetchProduct(code);
-        const s = computeHealthScore(p, { strict: $('#strict').checked, useNutri: $('#useNutri').checked });
+        const s = computeHealthScore(p);
         updateUI(p, s);
         await loadAdditivesTaxonomy();
-        updateUI(p, s); // Second update to include additives info
+        updateUI(p, s);
       } catch (e) {
         alert(e.message || 'Ocurrió un error inesperado.');
         console.error(e);
