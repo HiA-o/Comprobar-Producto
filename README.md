@@ -69,17 +69,21 @@ Consultas con `mode: "cors"` para compatibilidad con navegadores.
 ### 📈 Heurística de puntuación
 - **Puntuación base**: 10  
 - **Penalizaciones**:  
-  - NOVA → hasta -2.5  
-  - Azúcares → hasta -3.2  
-  - Grasas saturadas → hasta -2  
-  - Sal → hasta -1.5  
-  - Aditivos → hasta -1.6  
-  - Aromas sin fruta → -0.6  
+  - NOVA (grado de procesado) → hasta -3.0
+  - Azúcares → hasta -3.5 
+  - Grasas saturadas → hasta -2.5
+  - Grasas trans → -4.0 (si las contiene)
+  - Sal → hasta -2.5 
+  - Aditivos → hasta -2.3 (depende del número y nivel de riesgo)
+  - Aromas sin fruta → hasta -0.8
+  - Alto valor calórico → hasta -1.5
+  - 0% de fruta/verdura/nueces → -0.8
 - **Bonificaciones**:  
-  - Fibra → +0.8  
-  - Proteína → +0.5  
-  - Frutas/Verduras → +0.4  
-  - Nutri-Score → hasta +0.6  
+  - Fibra → hasta +1.0 
+  - Proteína → hasta +0.5
+  - Buena proporción de FVH (frutas, verduras, frutos secos) → +0.6
+  - Sin azúcares → +0.4
+  - Nutri-Score → hasta +0.6
 
 👉 **Rango final**: de 1 a 10  
 
