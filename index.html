@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Analizador de Alimentos — Open Food Facts</title>
+  <title>Qué Comes - Analizador de Alimentos</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
@@ -239,7 +239,7 @@
 </head>
 <body>
   <header>
-    <h1>Analizador de alimentos — Open Food Facts</h1>
+    <h1>Qué Comes - Analizador de Alimentos</h1>
     <p class="sub">Pega el código de barras o la URL de <b>Open Food Facts</b>, y te doy un resumen + <span class="tooltip" title="Reglas heurísticas basadas en azúcar, grasas, sal, NOVA, aditivos y otros">nota de saludabilidad</span>.</p>
   </header>
   <main>
@@ -310,7 +310,7 @@
         <summary class="tiny">Depuración (detalles técnicos)</summary>
         <pre class="notes" id="debug">—</pre>
       </details>
-      <p class="foot">Fuente de datos: Open Food Facts (API pública). Esta app no almacena nada.</p>
+      <p class="foot">Fuente de datos: Open Food Facts (API pública). Esta app no almacena nada. · <a href="faq.html" style="color:var(--muted); text-decoration:underline;">Preguntas frecuentes y metodología</a></p>
     </section>
   </main>
   <script>
@@ -318,18 +318,44 @@
     const fmt = n => (n == null || isNaN(n)) ? '—' : (Math.round(n * 10) / 10).toString();
     const clamp = (x, a, b) => Math.min(Math.max(x, a), b);
 
-    // Penalizaciones suaves/medias por señales controvertidas
-    const controversial = {
-      'en:e223': { level: 'media', note: 'Conservante (sulfitos). Puede causar reacciones en sensibles.' },
-      'en:e150d': { level: 'media', note: 'Colorante caramelo con amonio-sulfitos.' },
-      'en:e407': { level: 'media', note: 'Carragenanos: espesante controvertido.' },
-      'en:e950': { level: 'media', note: 'Acesulfamo K (edulcorante).' },
-      'en:e951': { level: 'media', note: 'Aspartamo (edulcorante).' },
-      'en:e954': { level: 'media', note: 'Sacarina (edulcorante).' },
-      'en:e621': { level: 'baja', note: 'Glutamato monosódico (potenciador del sabor).' },
-      'en:e250': { level: 'alta', note: 'Nitrito sódico en cárnicos.' },
-      'en:e251': { level: 'media', note: 'Nitrato sódico; precursor de nitritos.' }
-    };
+    // --- BASE DE DATOS MEJORADA DE ADITIVOS CON NOTAS ---
+const controversial = {
+  'en:e100': { level: 'baja', note: 'Colorante (curcumina). Generalmente seguro, puede interactuar con algunos antibióticos.' },
+  'en:e102': { level: 'alta', note: 'Tartrazina. Colorante amarillo sintético. Se ha asociado con hiperactividad en niños y puede causar alergias.' },
+  'en:e104': { level: 'alta', note: 'Amarillo de quinoleína. Colorante sintético. Prohibido en varios países por su relación con alergias e hiperactividad.' },
+  'en:e110': { level: 'alta', note: 'Amarillo ocaso. Colorante sintético. Vinculado a hiperactividad en niños y reacciones alérgicas. Prohibido en algunos países.' },
+  'en:e120': { level: 'media', note: 'Cochinilla. Colorante rojo de origen animal. Puede causar alergias y asma en personas sensibles.' },
+  'en:e122': { level: 'alta', note: 'Azorrubina. Colorante sintético rojo. Se ha asociado con hiperactividad infantil y asma.' },
+  'en:e124': { level: 'alta', note: 'Rojo cochinilla A. Colorante sintético. Vinculado a la hiperactividad en niños y urticaria.' },
+  'en:e129': { level: 'alta', note: 'Rojo allura AC. Colorante sintético. Asociado con hiperactividad en niños. Prohibido en varios países de Europa.' },
+  'en:e131': { level: 'alta', note: 'Azul patentado V. Colorante sintético. Potencialmente alergénico.' },
+  'en:e132': { level: 'media', note: 'Indigotina. Colorante sintético. Puede causar alergias y náuseas.' },
+  'en:e133': { level: 'media', note: 'Azul brillante FCF. Colorante sintético. Se asocia con alergias y posible hiperactividad.' },
+  'en:e150d': { level: 'media', note: 'Colorante (caramelo de sulfito amónico). Se recomienda limitar su consumo.' },
+  'en:e151': { level: 'alta', note: 'Negro brillante BN. Colorante sintético. Prohibido en varios países por sospechas de carcinogenicidad.' },
+  'en:e160b': { level: 'media', note: 'Colorante (annatto). En raras ocasiones se ha asociado con reacciones alérgicas.' },
+  'en:e160bii': { level: 'media', note: 'Bixina. Subtipo de Annatto. En raras ocasiones se ha asociado con reacciones alérgicas.' },
+  'en:e171': { level: 'alta', note: 'Dióxido de titanio. Colorante blanco. Se ha prohibido en la UE por riesgo genotóxico.' },
+  'en:e202': { level: 'baja', note: 'Sorbato de potasio. Conservante. Generalmente seguro, aunque puede causar reacciones cutáneas.' },
+  'en:e211': { level: 'media', note: 'Benzoato de sodio. Conservante. Puede causar reacciones alérgicas y, combinado con vitamina C, puede generar benceno (carcinógeno).' },
+  'en:e223': { level: 'media', note: 'Conservante (sulfitos). Puede causar reacciones en personas sensibles (alérgicos y asmáticos).' },
+  'en:e250': { level: 'alta', note: 'Nitrito sódico. Conservante en cárnicos curados. Se asocia con la formación de nitrosaminas, que son cancerígenas.' },
+  'en:e251': { level: 'media', note: 'Nitrato sódico. Conservante que se convierte en nitrito en el cuerpo.' },
+  'en:e320': { level: 'alta', note: 'BHA. Antioxidante sintético. Considerado un posible carcinógeno y disruptor endocrino.' },
+  'en:e321': { level: 'alta', note: 'BHT. Antioxidante sintético. Considerado un posible carcinógeno y disruptor endocrino.' },
+  'en:e331': { level: 'baja', note: 'Citrato de sodio. Regulador de acidez y antioxidante. Generalmente considerado seguro.' },
+  'en:e331iii': { level: 'baja', note: 'Citrato trisódico. Regulador de acidez y conservante. Generalmente considerado seguro.' },
+  'en:e407': { level: 'alta', note: 'Carragenanos. Espesante controvertido. Algunos estudios lo asocian con inflamación intestinal.' },
+  'en:e412': { level: 'baja', note: 'Goma guar. Espesante. Generalmente seguro, pero en grandes cantidades puede causar malestar intestinal.' },
+  'en:e415': { level: 'baja', note: 'Goma xantana. Espesante y estabilizante. Generalmente considerado seguro.' },
+  'en:e466': { level: 'baja', note: 'Carboximetilcelulosa. Espesante. Puede afectar a la flora intestinal y se asocia con inflamación en algunos estudios.' },
+  'en:e621': { level: 'media', note: 'Glutamato monosódico (MSG). Potenciador del sabor. Se ha relacionado con el "síndrome del restaurante chino" y efectos en personas sensibles.' },
+  'en:e627': { level: 'media', note: 'Guanilato disódico. Potenciador del sabor. Su consumo debe ser moderado.' },
+  'en:e631': { level: 'media', note: 'Inosinato disódico. Potenciador del sabor. No apto para veganos ni vegetarianos.' },
+  'en:e950': { level: 'media', note: 'Acesulfamo K. Edulcorante artificial. Considerado seguro por la mayoría de las agencias de salud.' },
+  'en:e951': { level: 'media', note: 'Aspartamo. Edulcorante artificial. Genera controversia, pero ha sido considerado seguro por la EFSA.' },
+  'en:e954': { level: 'media', note: 'Sacarina. Edulcorante artificial.' },
+};
 
     let additivesTaxonomy = null;
     async function loadAdditivesTaxonomy() {
@@ -526,8 +552,11 @@ $('#ing').textContent = cleanedIngredients;
             else if (vegNote.toLowerCase().includes('yes')) { extra.push('Apto para veganos/vegetarianos'); }
           }
 
+          // **NUEVO: Lógica mejorada para mostrar la nota del aditivo**
           if (cont) {
             extra.push(`Nota: ${cont.note}`);
+          } else {
+            extra.push('Sin información adicional.');
           }
 
           const html = `<div class="pill small"><div class="title">${tagToEcode(t)} — ${disp || tagToEcode(t)}</div><div class="tiny">${extra.join(' · ') || 'Sin información adicional.'}</div></div>`;
