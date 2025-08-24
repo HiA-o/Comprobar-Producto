@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FAQ - Analizador de Alimentos</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0b1020;
+      --card: #131a33;
+      --muted: #9aa3b2;
+      --accent: #7cd992;
+      --bad: #ef6262;
+      --warn: #ffb020;
+      --ok: #6cb4ff;
+      --good: #7ee081;
+      --text: #e5eef7;
+      --border: #243056;
+      --input-bg: #0b1328;
+      --input-border: #33406a;
+      --placeholder: #7b86a6;
+      --button-bg: #1e2a52;
+      --button-border: #2a3a6d;
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Roboto', system-ui, sans-serif;
+      background: linear-gradient(180deg, var(--bg) 0%, #0f1530 100%);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    header {
+      padding: 2.5rem 1rem 1rem;
+      text-align: center;
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 4vw, 3rem);
+      letter-spacing: 0.4px;
+    }
+    p.sub {
+      margin: 0.5rem 0 0;
+      color: var(--muted);
+      font-size: 1rem;
+    }
+    main {
+      max-width: 1100px;
+      margin: 1.5rem auto 3.5rem;
+      padding: 0 1rem;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 1rem;
+      box-shadow: 0 10px 30px rgba(5, 10, 30, 0.45);
+      padding: 1.5rem;
+    }
+    h2 {
+      font-size: 1.5rem;
+      margin-top: 0;
+    }
+    h3 {
+      font-size: 1.1rem;
+      margin-top: 1.5rem;
+    }
+    p {
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+    ul {
+      padding-left: 1.25rem;
+      color: var(--muted);
+    }
+    li {
+      margin-bottom: 0.5rem;
+    }
+    .divider {
+      height: 1px;
+      background: #25335f;
+      margin: 2rem 0;
+    }
+    .back-link {
+      display: inline-block;
+      margin-top: 1.5rem;
+      color: var(--accent);
+      text-decoration: none;
+      font-weight: bold;
+    }
+    .back-link:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Preguntas Frecuentes y Metodología</h1>
+    <p class="sub">Toda la información que necesitas saber sobre cómo funciona este analizador de alimentos.</p>
+  </header>
+
+  <main>
+    <div class="card">
+      <h2>¿Cómo se calcula la nota de saludabilidad?</h2>
+      <p>La puntuación de 1 a 10 es una heurística desarrollada para ofrecer una guía rápida sobre la saludabilidad de un producto. Se basa en una combinación de factores nutricionales, el grado de procesado del alimento y la presencia de aditivos.</p>
+      
+      <h3>📈 Heurística de puntuación</h3>
+      <ul>
+        <li><strong>Puntuación base</strong>: 10</li>
+        <li><strong>Penalizaciones</strong>:</li>
+        <ul>
+          <li>NOVA (grado de procesado) → hasta -3.0</li>
+          <li>Azúcares → hasta -3.5</li>
+          <li>Grasas saturadas → hasta -2.5</li>
+          <li>Grasas trans → -4.0 (si las contiene)</li>
+          <li>Sal → hasta -2.5</li>
+          <li>Aditivos → hasta -2.3 (depende del número y nivel de riesgo)</li>
+          <li>Aromas sin fruta → hasta -0.8</li>
+          <li>Alto valor calórico → hasta -1.5</li>
+          <li>0% de fruta/verdura/nueces → -0.8</li>
+        </ul>
+        <li><strong>Bonificaciones</strong>:</li>
+        <ul>
+          <li>Fibra → hasta +1.0</li>
+          <li>Proteína → hasta +0.5</li>
+          <li>Buena proporción de FVH (frutas, verduras, frutos secos) → +0.6</li>
+          <li>Sin azúcares → +0.4</li>
+          <li>Nutri-Score → hasta +0.6</li>
+        </ul>
+        <li><strong>Rango final</strong>: de 1 a 10</li>
+      </ul>
+      
+      <p>⚠️ <strong>Aviso importante</strong>: Esta herramienta es una guía. No sustituye la recomendación de un nutricionista ni es un consejo médico. La saludabilidad de un producto debe evaluarse en el contexto de una dieta completa y equilibrada.</p>
+      
+      <div class="divider"></div>
+      
+      <h2>¿De dónde provienen los datos?</h2>
+      <p>Todos los datos, incluyendo ingredientes, valores nutricionales y aditivos, son obtenidos a través de la API pública y gratuita de <strong>Open Food Facts</strong>. Open Food Facts es una base de datos colaborativa de productos alimentarios de todo el mundo, construida por miles de voluntarios.</p>
+      
+      <div class="divider"></div>
+      
+      <h2>¿Por qué la información de aditivos es diferente a la de Open Food Facts?</h2>
+      <p>Aunque los datos de aditivos provienen de Open Food Facts, las notas y el riesgo asociado son un trabajo de investigación propio. Hemos creado una base de datos interna para ofrecerte información más clara y directa sobre los aditivos más comunes y controvertidos, basándonos en fuentes como la EFSA (Autoridad Europea de Seguridad Alimentaria) y otros estudios. Así evitamos la información genérica o poco útil que a veces aparece en la base de datos original.</p>
+      
+      <div class="divider"></div>
+      
+      <a href="index.html" class="back-link">← Volver a la página principal</a>
+    </div>
+  </main>
+</body>
+</html>
