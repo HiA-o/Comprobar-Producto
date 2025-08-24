@@ -70,14 +70,14 @@ Consultas con `mode: "cors"` para compatibilidad con navegadores.
 - **Puntuación base**: 10  
 - **Penalizaciones**:  
   - NOVA (grado de procesado) → hasta -3.0
-  - Nutri-Score D/E → hasta -3.0
+  - Nutri-Score D/E → hasta -2.0
   - Azúcares → hasta -3.5 
   - Grasas saturadas → hasta -2.5
   - Grasas trans → -4.0 (si las contiene)
-  - Sal → hasta -2.5
+  - Sal → hasta -2.2
   - Aditivos → penalización por cantidad y riesgo.
   - Aromas sin fruta → hasta -0.8
-  - Alto valor calórico → hasta -1.5
+  - Alto valor calórico → hasta -1.0
   - 0% de fruta/verdura/nueces → -0.8
   - Alcohol → -2.0
   - Cafeína → -1.0
