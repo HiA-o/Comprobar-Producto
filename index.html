@@ -371,69 +371,70 @@
     const fmt = n => (n == null || isNaN(n)) ? '—' : (Math.round(n * 10) / 10).toString();
     const clamp = (x, a, b) => Math.min(Math.max(x, a), b);
 
-    // --- BASE DE DATOS MEJORADA DE ADITIVOS CON NOTAS ---
-    const controversial = {
-      'en:e100': { level: 'baja', note: 'Colorante (curcumina). Generalmente seguro, puede interactuar con algunos antibióticos.' },
-      'en:e102': { level: 'alta', note: 'Tartrazina. Colorante amarillo sintético. Se ha asociado con hiperactividad en niños y puede causar alergias.' },
-      'en:e104': { level: 'alta', note: 'Amarillo de quinoleína. Colorante sintético. Prohibido en varios países por su relación con alergias e hiperactividad.' },
-      'en:e110': { level: 'alta', note: 'Amarillo ocaso. Colorante sintético. Vinculado a hiperactividad en niños y reacciones alérgicas. Prohibido en algunos países.' },
-      'en:e120': { level: 'media', note: 'Cochinilla. Colorante rojo de origen animal. Puede causar alergias y asma en personas sensibles.' },
-      'en:e122': { level: 'alta', note: 'Azorrubina. Colorante sintético rojo. Se ha asociado con hiperactividad infantil y asma.' },
-      'en:e124': { level: 'alta', note: 'Rojo cochinilla A. Colorante sintético. Vinculado a la hiperactividad en niños y urticaria.' },
-      'en:e129': { level: 'alta', note: 'Rojo allura AC. Colorante sintético. Asociado con hiperactividad en niños. Prohibido en varios países de Europa.' },
-      'en:e131': { level: 'alta', note: 'Azul patentado V. Colorante sintético. Potencialmente alergénico.' },
-      'en:e132': { level: 'media', note: 'Indigotina. Colorante sintético. Puede causar alergias y náuseas.' },
-      'en:e133': { level: 'media', note: 'Azul brillante FCF. Colorante sintético. Se asocia con alergias y posible hiperactividad.' },
-      'en:e150d': { level: 'media', note: 'Colorante (caramelo de sulfito amónico). Se recomienda limitar su consumo.' },
-      'en:e151': { level: 'alta', note: 'Negro brillante BN. Colorante sintético. Prohibido en varios países por sospechas de carcinogenicidad.' },
-      'en:e160b': { level: 'media', note: 'Colorante (annatto). En raras ocasiones se ha asociado con reacciones alérgicas.' },
-      'en:e160bii': { level: 'media', note: 'Bixina. Subtipo de Annatto. En raras ocasiones se ha asociado con reacciones alérgicas.' },
-      'en:e171': { level: 'alta', note: 'Dióxido de titanio. Colorante blanco. Se ha prohibido en la UE por riesgo genotóxico.' },
-      'en:e202': { level: 'baja', note: 'Sorbato de potasio. Conservante. Generalmente seguro, aunque puede causar reacciones cutáneas.' },
-      'en:e211': { level: 'media', note: 'Benzoato de sodio. Conservante. Puede causar reacciones alérgicas y, combinado con vitamina C, puede generar benceno (carcinógeno).' },
-      'en:e223': { level: 'media', note: 'Conservante (sulfitos). Puede causar reacciones en personas sensibles (alérgicos y asmáticos).' },
-      'en:e250': { level: 'alta', note: 'Nitrito sódico. Conservante en cárnicos curados. Se asocia con la formación de nitrosaminas, que son cancerígenas.' },
-      'en:e251': { level: 'media', note: 'Nitrato sódico. Conservante que se convierte en nitrito en el cuerpo.' },
-      'en:e304': { level: 'baja', note: 'Palmitato de ascorbilo. Antioxidante derivado de la vitamina C y el ácido palmítico. Generalmente considerado seguro. Podría no ser apto para veganos si el ácido palmítico proviene de grasa animal.' },
-      'en:e306': { level: 'baja', note: 'Extracto de tocoferoles. Antioxidante natural derivado de aceites vegetales (vitamina E). Generalmente considerado seguro por las autoridades sanitarias.' },
-      'en:e320': { level: 'alta', note: 'BHA. Antioxidante sintético. Considerado un posible carcinógeno y disruptor endocrino.' },
-      'en:e321': { level: 'alta', note: 'BHT. Antioxidante sintético. Considerado un posible carcinógeno y disruptor endocrino.' },
-      'en:e322': { level: 'baja', note: 'Lecitina. Emulsionante de origen natural (soja, girasol, huevo). Generalmente seguro, aunque las personas alérgicas a la soja o el huevo deben verificar la fuente.' },
-      'en:e322i': { level: 'baja', note: 'Lecitina. Emulsionante de origen natural. Variante de E322, con propiedades y riesgos idénticos. Generalmente considerado seguro.' },
-      'en:e327': { level: 'baja', note: 'Lactato de calcio. Regulador de acidez y fuente de calcio. Generalmente se considera seguro.' },
-      'en:e330': { level: 'baja', note: 'Ácido cítrico. Regulador de acidez y antioxidante natural. Se encuentra comúnmente en frutas cítricas.' },
-      'en:e331': { level: 'baja', note: 'Citrato de sodio. Regulador de acidez y antioxidante. Generalmente considerado seguro.' },
-      'en:e331iii': { level: 'baja', note: 'Citrato trisódico. Regulador de acidez y conservante. Generalmente considerado seguro.' },
-      'en:e407': { level: 'alta', note: 'Carragenanos. Espesante controvertido. Algunos estudios lo asocian con inflamación intestinal.' },
-      'en:e412': { level: 'baja', note: 'Goma guar. Espesante. Generalmente seguro, pero en grandes cantidades puede causar malestar intestinal.' },
-      'en:e415': { level: 'baja', note: 'Goma xantana. Espesante y estabilizante. Generalmente considerado seguro.' },
-      'en:e420': { level: 'baja', note: 'Sorbitol. Edulcorante y agente de carga. Un consumo excesivo puede tener efectos laxantes.' },
-      'en:e420ii': { level: 'baja', note: 'Jarabe de sorbitol. Un edulcorante de carga con menos calorías que el azúcar. Un consumo excesivo puede tener efectos laxantes.' },
-      'en:e440': { level: 'baja', note: 'Pectinas. Espesante y gelificante natural que se extrae de frutas. Se considera inofensivo.' },
-      'en:e450': { level: 'media', note: 'Difosfatos. Emulsionantes y estabilizantes. Se usan para mejorar la textura de quesos o embutidos. Su consumo en exceso puede interferir con la absorción de calcio.' },
-      'en:e450i': { level: 'baja', note: 'Difosfato de sodio. Un emulsionante y estabilizante que ayuda a mantener la textura de carnes procesadas, quesos y productos horneados. Consumo moderado recomendado.' },
-      'en:e450v': { level: 'baja', note: 'Difosfato de pentasodio. Fosfato utilizado como emulsionante y estabilizante en productos cárnicos, pescados y quesos procesados. Consumo moderado recomendado' },
-      'en:e466': { level: 'baja', note: 'Carboximetilcelulosa. Espesante. Puede afectar a la flora intestinal y se asocia con inflamación en algunos estudios.' },
-      'en:e471': { level: 'baja', note: 'Mono y diglicéridos de ácidos grasos. Emulsionante. Se utiliza en productos de panadería, helados y margarinas. Generalmente considerados seguros.' },
-      'en:e472e': { level: 'baja', note: 'Ésteres de monoglicéridos y diglicéridos de ácidos grasos. Emulsionante. Se usa para mejorar la textura de los alimentos. Considerado seguro para el consumo humano.' },
-      'en:e500': { level: 'baja', note: 'Bicarbonato de sodio. Agente leudante. Generalmente seguro, pero personas con dietas bajas en sodio o problemas renales deben moderar su consumo.' },
-      'en:e500ii': { level: 'baja', note: 'Carbonato ácido de sodio. Agente leudante y regulador de acidez, generalmente considerado seguro.' },
-      'en:e503': { level: 'baja', note: 'Carbonato de amonio. Agente leudante. Considerado seguro ya que se descompone completamente durante el horneado y no deja residuos en el producto final.' },
-      'en:e503ii': { level: 'baja', note: 'Carbonato ácido de amonio. Agente leudante. Se descompone completamente durante el horneado, no dejando residuos en el producto final. Generalmente considerado seguro.' },
-      'en:e508': { level: 'baja', note: 'Cloruro de potasio. Un estabilizante y gelificante, a menudo usado como sustituto de la sal para reducir el sodio. Considerado seguro.' },
-      'en:e621': { level: 'media', note: 'Glutamato monosódico (MSG). Potenciador del sabor. Se ha relacionado con el "síndrome del restaurante chino" y efectos en personas sensibles.' },
-      'en:e627': { level: 'media', note: 'Guanilato disódico. Potenciador del sabor. Su consumo debe ser moderado.' },
-      'en:e631': { level: 'media', note: 'Inosinato disódico. Potenciador del sabor. No apto para veganos ni vegetarianos.' },
-      'en:e950': { level: 'media', note: 'Acesulfamo K. Edulcorante artificial. Considerado seguro por la mayoría de las agencias de salud.' },
-      'en:e951': { level: 'media', note: 'Aspartamo. Edulcorante artificial. Genera controversia, pero ha sido considerado seguro por la EFSA.' },
-      'en:e952': { level: 'media', note: 'Ciclamato. Un edulcorante artificial sintético que es más dulce que el azúcar. Genera cierta controversia, pero está aprobado para su uso en la UE.' },
-      'en:e954': { level: 'media', note: 'Sacarina. Edulcorante artificial.' },
-      'en:e955': { level: 'media', note: 'Sucralosa. Edulcorante artificial. Genera debate, pero ha sido considerada segura por las principales autoridades sanitarias. Se recomienda un consumo moderado.' },
-      'en:e965': { level: 'baja', note: 'Maltitol. Edulcorante de carga (poliol) con menos calorías que el azúcar. En grandes cantidades puede causar efectos laxantes.' },
-      'en:e966': { level: 'baja', note: 'Lactitol. Un edulcorante de carga y agente de volumen. Es un poliol que, en exceso, puede tener efectos laxantes.' },
-      'en:e968': { level: 'baja', note: 'Eritritol. Un edulcorante natural que se encuentra en frutas. No tiene calorías y no afecta los niveles de glucosa en sangre, pero un consumo excesivo puede causar malestar digestivo.' },
-      'en:e1414': { level: 'baja', note: 'Almidón modificado. Espesante y estabilizante. Proviene del almidón de maíz o patata, es un derivado natural, generalmente considerado seguro.' },
-    };
+// --- BASE DE DATOS MEJORADA DE ADITIVOS CON NOTAS (ENFOQUE ESPAÑA/UE) ---
+const controversial = {
+  // --- Colorantes ---
+  'en:e100': { level: 'baja', note: 'Colorante (curcumina). Generalmente seguro, puede interactuar con algunos antibióticos.' },
+  'en:e102': { level: 'alta', note: 'Tartrazina. Colorante amarillo sintético. Asociado con hiperactividad infantil y alergias. Debe indicarse en etiquetas en la UE.' },
+  'en:e104': { level: 'alta', note: 'Amarillo de quinoleína. Prohibido en varios países por su relación con alergias e hiperactividad.' },
+  'en:e110': { level: 'alta', note: 'Amarillo ocaso. Vinculado a hiperactividad en niños y reacciones alérgicas. Restringido en la UE.' },
+  'en:e120': { level: 'media', note: 'Cochinilla. Colorante rojo de origen animal. Puede causar alergias en personas sensibles.' },
+  'en:e122': { level: 'alta', note: 'Azorrubina. Asociada con hiperactividad infantil y asma. Debe advertirse en la UE.' },
+  'en:e124': { level: 'alta', note: 'Rojo cochinilla A. Colorante sintético. Vinculado a la hiperactividad en niños y urticaria.' },
+  'en:e129': { level: 'alta', note: 'Rojo allura AC. Asociado con hiperactividad. Prohibido en varios países europeos.' },
+  'en:e131': { level: 'alta', note: 'Azul patentado V. Colorante sintético. Potencialmente alergénico.' },
+  'en:e132': { level: 'media', note: 'Indigotina. Puede causar reacciones alérgicas y náuseas.' },
+  'en:e133': { level: 'media', note: 'Azul brillante FCF. Asociado con alergias y posible hiperactividad.' },
+  'en:e150d': { level: 'media', note: 'Caramelo de sulfito amónico. En exceso puede generar compuestos problemáticos.' },
+  'en:e151': { level: 'alta', note: 'Negro brillante BN. Prohibido en varios países por sospechas de carcinogenicidad.' },
+  'en:e160b': { level: 'media', note: 'Annatto. Natural, pero puede causar reacciones alérgicas en raras ocasiones.' },
+  'en:e171': { level: 'alta', note: 'Dióxido de titanio. Prohibido en la UE (2022) por riesgo genotóxico.' },
+
+  // --- Conservantes ---
+  'en:e200': { level: 'baja', note: 'Ácido sórbico. Conservante. Generalmente seguro, aunque puede irritar en exceso.' },
+  'en:e202': { level: 'baja', note: 'Sorbato de potasio. Conservante. Puede causar reacciones cutáneas en personas sensibles.' },
+  'en:e210': { level: 'media', note: 'Ácido benzoico. Puede causar reacciones alérgicas y molestias digestivas.' },
+  'en:e211': { level: 'media', note: 'Benzoato de sodio. Combinado con vitamina C puede formar benceno (carcinógeno). Riesgo moderado.' },
+  'en:e223': { level: 'media', note: 'Sulfitos. Pueden causar reacciones en asmáticos y personas sensibles.' },
+  'en:e224': { level: 'media', note: 'Metabisulfito potásico. Conservante común en vinos y zumos. Riesgo para asmáticos.' },
+  'en:e249': { level: 'alta', note: 'Nitrito potásico. Usado en embutidos curados. Riesgo de nitrosaminas (cancerígenas).' },
+  'en:e250': { level: 'alta', note: 'Nitrito sódico. Conservante en cárnicos curados. Riesgo de nitrosaminas cancerígenas.' },
+  'en:e251': { level: 'media', note: 'Nitrato sódico. Puede convertirse en nitrito en el organismo.' },
+
+  // --- Fosfatos y ácidos ---
+  'en:e338': { level: 'media', note: 'Ácido fosfórico. Muy usado en refrescos. Puede afectar a la salud ósea si se consume en exceso.' },
+  'en:e450': { level: 'media', note: 'Difosfatos. Usados en quesos y embutidos. Pueden afectar a la absorción de calcio.' },
+  'en:e452': { level: 'media', note: 'Polifosfatos. Usados en procesados cárnicos y mariscos. En exceso, riesgo renal y óseo.' },
+
+  // --- Antioxidantes ---
+  'en:e320': { level: 'alta', note: 'BHA. Posible carcinógeno y disruptor endocrino.' },
+  'en:e321': { level: 'alta', note: 'BHT. Posible carcinógeno y disruptor endocrino.' },
+
+  // --- Espesantes y gomas ---
+  'en:e407': { level: 'alta', note: 'Carragenanos. Algunos estudios los relacionan con inflamación intestinal.' },
+  'en:e410': { level: 'baja', note: 'Goma de algarrobo. Generalmente segura, aunque puede causar molestias digestivas en exceso.' },
+  'en:e412': { level: 'baja', note: 'Goma guar. Segura, pero en grandes cantidades puede dar gases y malestar intestinal.' },
+  'en:e414': { level: 'baja', note: 'Goma arábiga. Natural, se considera segura.' },
+  'en:e415': { level: 'baja', note: 'Goma xantana. Estabilizante seguro, aunque puede causar molestias digestivas en exceso.' },
+
+  // --- Edulcorantes ---
+  'en:e420': { level: 'baja', note: 'Sorbitol. Puede tener efecto laxante en exceso.' },
+  'en:e950': { level: 'media', note: 'Acesulfamo K. Edulcorante artificial. Considerado seguro por EFSA, pero se recomienda moderación.' },
+  'en:e951': { level: 'media', note: 'Aspartamo. Muy estudiado. Seguro según EFSA, pero sigue siendo controvertido.' },
+  'en:e952': { level: 'media', note: 'Ciclamato. Permitido en la UE, prohibido en EE.UU. Controversia por toxicidad en dosis altas.' },
+  'en:e954': { level: 'media', note: 'Sacarina. Edulcorante artificial con controversia histórica. Hoy considerado seguro en dosis normales.' },
+  'en:e955': { level: 'media', note: 'Sucralosa. Edulcorante artificial. Seguro, aunque estudios recientes piden precaución en consumo elevado.' },
+  'en:e959': { level: 'baja', note: 'Neohesperidina DC. Edulcorante intenso derivado de cítricos. Generalmente seguro.' },
+  'en:e960': { level: 'baja', note: 'Stevia (glucósidos de esteviol). Natural y seguro, aunque puede causar molestias digestivas en exceso.' },
+  'en:e961': { level: 'baja', note: 'Neotamo. Edulcorante artificial muy potente. Considerado seguro por EFSA.' },
+  'en:e968': { level: 'baja', note: 'Eritritol. Edulcorante natural sin calorías. Generalmente seguro, aunque en exceso puede causar molestias intestinales.' },
+
+  // --- Potenciadores de sabor ---
+  'en:e621': { level: 'media', note: 'Glutamato monosódico (MSG). Seguro para la mayoría, pero puede causar reacciones en personas sensibles.' },
+  'en:e627': { level: 'media', note: 'Guanilato disódico. Potenciador del sabor. Su consumo debe ser moderado.' },
+  'en:e631': { level: 'media', note: 'Inosinato disódico. Potenciador del sabor. No apto para veganos ni vegetarianos.' }
+};
+
 
     let additivesTaxonomy = null;
     async function loadAdditivesTaxonomy() {
