@@ -259,6 +259,29 @@
     .history-container.empty {
         display: none;
     }
+    .warning-message {
+      background-color: var(--warn);
+      color: var(--bg);
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 20px;
+      text-align: center;
+      font-weight: bold;
+      display: none;
+    }
+    #reasons {
+      list-style-type: none;
+      padding: 0;
+      margin: 0.75rem 0 0;
+    }
+    #reasons li {
+      background: #0c1530;
+      border: 1px solid #273768;
+      padding: 0.7rem 0.8rem;
+      border-radius: 0.75rem;
+      font-size: 0.9rem;
+      margin-bottom: 0.6rem;
+    }
   </style>
 </head>
 <body>
@@ -306,38 +329,41 @@
     </section>
 
     <section class="card" style="margin-top:1.5rem">
-      <div class="flex right"><button id="copy" class="ghost">Copiar resumen</button></div>
-      <div class="flex">
-        <img id="img" alt="imagen" style="width:5.5rem; height:5.5rem; object-fit:cover; border-radius:0.75rem; border:1px solid #2a3966; background:#0a1226;" />
-        <div class="flex-col">
-          <div style="font-weight:800; font-size:1.25rem" id="title">—</div>
-          <div class="tiny" id="brand">—</div>
-          <div class="tiny" id="cat">—</div>
-          <div class="flex" style="margin-top:0.4rem; gap:0.4rem">
-            <span id="nutriBadge" class="badge" style="display:none"></span>
-            <span id="novaBadge" class="badge" style="display:none"></span>
-            <span id="ecoBadge" class="badge" style="display:none"></span>
-          </div>
+        <div id="result-container">
+            <div class="flex right"><button id="copy" class="ghost">Copiar resumen</button></div>
+            <div class="flex">
+                <img id="img" alt="imagen" style="width:5.5rem; height:5.5rem; object-fit:cover; border-radius:0.75rem; border:1px solid #2a3966; background:#0a1226;" />
+                <div class="flex-col">
+                    <div style="font-weight:800; font-size:1.25rem" id="title">—</div>
+                    <div class="tiny" id="brand">—</div>
+                    <div class="tiny" id="cat">—</div>
+                    <div class="flex" style="margin-top:0.4rem; gap:0.4rem">
+                        <span id="nutriBadge" class="badge" style="display:none"></span>
+                        <span id="novaBadge" class="badge" style="display:none"></span>
+                        <span id="ecoBadge" class="badge" style="display:none"></span>
+                    </div>
+                </div>
+            </div>
+            <div class="divider"></div>
+            <h2>🚦 Señales clave</h2>
+            <div class="grid">
+                <div class="pill"><div class="title">Ingredientes</div><div class="muted" id="ing">—</div></div>
+                <div class="pill"><div class="title">Nutrientes /100g</div><div class="muted" id="nutr"></div></div>
+            </div>
+            <div class="divider"></div>
+            <h2>🧪 Aditivos y evaluación</h2>
+            <div class="list" id="additivesList"><div class="muted">—</div></div>
+            <div class="divider"></div>
+            <h2>📝 Motivos de la nota</h2>
+            <div id="warning-message" class="warning-message"></div>
+            <ul id="reasons"></ul>
         </div>
-      </div>
-      <div class="divider"></div>
-      <h2>🚦 Señales clave</h2>
-      <div class="grid">
-        <div class="pill"><div class="title">Ingredientes</div><div class="muted" id="ing">—</div></div>
-        <div class="pill"><div class="title">Nutrientes /100g</div><div class="muted" id="nutr"></div></div>
-      </div>
-      <div class="divider"></div>
-      <h2>🧪 Aditivos y evaluación</h2>
-      <div class="list" id="additivesList"><div class="muted">—</div></div>
-      <div class="divider"></div>
-      <h2>📝 Motivos de la nota</h2>
-      <div class="list" id="reasons"><div class="muted">—</div></div>
-      <div class="divider"></div>
-      <details>
-        <summary class="tiny">Depuración (detalles técnicos)</summary>
-        <pre class="notes" id="debug">—</pre>
-      </details>
-      <p class="foot">Fuente de datos: Open Food Facts (API pública). Esta herramienta no almacena nada. · <a href="faq.html" style="color:var(--muted); text-decoration:underline;">Preguntas frecuentes y metodología</a></p>
+        <div class="divider"></div>
+        <details>
+            <summary class="tiny">Depuración (detalles técnicos)</summary>
+            <pre class="notes" id="debug">—</pre>
+        </details>
+        <p class="foot">Fuente de datos: Open Food Facts (API pública). Esta herramienta no almacena nada. · <a href="faq.html" style="color:var(--muted); text-decoration:underline;">Preguntas frecuentes y metodología</a></p>
     </section>
   </main>
   <script>
@@ -368,28 +394,44 @@
       'en:e223': { level: 'media', note: 'Conservante (sulfitos). Puede causar reacciones en personas sensibles (alérgicos y asmáticos).' },
       'en:e250': { level: 'alta', note: 'Nitrito sódico. Conservante en cárnicos curados. Se asocia con la formación de nitrosaminas, que son cancerígenas.' },
       'en:e251': { level: 'media', note: 'Nitrato sódico. Conservante que se convierte en nitrito en el cuerpo.' },
+      'en:e304': { level: 'baja', note: 'Palmitato de ascorbilo. Antioxidante derivado de la vitamina C y el ácido palmítico. Generalmente considerado seguro. Podría no ser apto para veganos si el ácido palmítico proviene de grasa animal.' },
+      'en:e306': { level: 'baja', note: 'Extracto de tocoferoles. Antioxidante natural derivado de aceites vegetales (vitamina E). Generalmente considerado seguro por las autoridades sanitarias.' },
       'en:e320': { level: 'alta', note: 'BHA. Antioxidante sintético. Considerado un posible carcinógeno y disruptor endocrino.' },
       'en:e321': { level: 'alta', note: 'BHT. Antioxidante sintético. Considerado un posible carcinógeno y disruptor endocrino.' },
       'en:e322': { level: 'baja', note: 'Lecitina. Emulsionante de origen natural (soja, girasol, huevo). Generalmente seguro, aunque las personas alérgicas a la soja o el huevo deben verificar la fuente.' },
       'en:e322i': { level: 'baja', note: 'Lecitina. Emulsionante de origen natural. Variante de E322, con propiedades y riesgos idénticos. Generalmente considerado seguro.' },
+      'en:e327': { level: 'baja', note: 'Lactato de calcio. Regulador de acidez y fuente de calcio. Generalmente se considera seguro.' },
+      'en:e330': { level: 'baja', note: 'Ácido cítrico. Regulador de acidez y antioxidante natural. Se encuentra comúnmente en frutas cítricas.' },
       'en:e331': { level: 'baja', note: 'Citrato de sodio. Regulador de acidez y antioxidante. Generalmente considerado seguro.' },
       'en:e331iii': { level: 'baja', note: 'Citrato trisódico. Regulador de acidez y conservante. Generalmente considerado seguro.' },
       'en:e407': { level: 'alta', note: 'Carragenanos. Espesante controvertido. Algunos estudios lo asocian con inflamación intestinal.' },
       'en:e412': { level: 'baja', note: 'Goma guar. Espesante. Generalmente seguro, pero en grandes cantidades puede causar malestar intestinal.' },
       'en:e415': { level: 'baja', note: 'Goma xantana. Espesante y estabilizante. Generalmente considerado seguro.' },
+      'en:e420': { level: 'baja', note: 'Sorbitol. Edulcorante y agente de carga. Un consumo excesivo puede tener efectos laxantes.' },
+      'en:e420ii': { level: 'baja', note: 'Jarabe de sorbitol. Un edulcorante de carga con menos calorías que el azúcar. Un consumo excesivo puede tener efectos laxantes.' },
+      'en:e440': { level: 'baja', note: 'Pectinas. Espesante y gelificante natural que se extrae de frutas. Se considera inofensivo.' },
       'en:e450': { level: 'media', note: 'Difosfatos. Emulsionantes y estabilizantes. Se usan para mejorar la textura de quesos o embutidos. Su consumo en exceso puede interferir con la absorción de calcio.' },
+      'en:e450i': { level: 'baja', note: 'Difosfato de sodio. Un emulsionante y estabilizante que ayuda a mantener la textura de carnes procesadas, quesos y productos horneados. Consumo moderado recomendado.' },
+      'en:e450v': { level: 'baja', note: 'Difosfato de pentasodio. Fosfato utilizado como emulsionante y estabilizante en productos cárnicos, pescados y quesos procesados. Consumo moderado recomendado' },
       'en:e466': { level: 'baja', note: 'Carboximetilcelulosa. Espesante. Puede afectar a la flora intestinal y se asocia con inflamación en algunos estudios.' },
       'en:e471': { level: 'baja', note: 'Mono y diglicéridos de ácidos grasos. Emulsionante. Se utiliza en productos de panadería, helados y margarinas. Generalmente considerados seguros.' },
       'en:e472e': { level: 'baja', note: 'Ésteres de monoglicéridos y diglicéridos de ácidos grasos. Emulsionante. Se usa para mejorar la textura de los alimentos. Considerado seguro para el consumo humano.' },
       'en:e500': { level: 'baja', note: 'Bicarbonato de sodio. Agente leudante. Generalmente seguro, pero personas con dietas bajas en sodio o problemas renales deben moderar su consumo.' },
+      'en:e500ii': { level: 'baja', note: 'Carbonato ácido de sodio. Agente leudante y regulador de acidez, generalmente considerado seguro.' },
       'en:e503': { level: 'baja', note: 'Carbonato de amonio. Agente leudante. Considerado seguro ya que se descompone completamente durante el horneado y no deja residuos en el producto final.' },
+      'en:e503ii': { level: 'baja', note: 'Carbonato ácido de amonio. Agente leudante. Se descompone completamente durante el horneado, no dejando residuos en el producto final. Generalmente considerado seguro.' },
+      'en:e508': { level: 'baja', note: 'Cloruro de potasio. Un estabilizante y gelificante, a menudo usado como sustituto de la sal para reducir el sodio. Considerado seguro.' },
       'en:e621': { level: 'media', note: 'Glutamato monosódico (MSG). Potenciador del sabor. Se ha relacionado con el "síndrome del restaurante chino" y efectos en personas sensibles.' },
       'en:e627': { level: 'media', note: 'Guanilato disódico. Potenciador del sabor. Su consumo debe ser moderado.' },
       'en:e631': { level: 'media', note: 'Inosinato disódico. Potenciador del sabor. No apto para veganos ni vegetarianos.' },
       'en:e950': { level: 'media', note: 'Acesulfamo K. Edulcorante artificial. Considerado seguro por la mayoría de las agencias de salud.' },
       'en:e951': { level: 'media', note: 'Aspartamo. Edulcorante artificial. Genera controversia, pero ha sido considerado seguro por la EFSA.' },
+      'en:e952': { level: 'media', note: 'Ciclamato. Un edulcorante artificial sintético que es más dulce que el azúcar. Genera cierta controversia, pero está aprobado para su uso en la UE.' },
       'en:e954': { level: 'media', note: 'Sacarina. Edulcorante artificial.' },
       'en:e955': { level: 'media', note: 'Sucralosa. Edulcorante artificial. Genera debate, pero ha sido considerada segura por las principales autoridades sanitarias. Se recomienda un consumo moderado.' },
+      'en:e965': { level: 'baja', note: 'Maltitol. Edulcorante de carga (poliol) con menos calorías que el azúcar. En grandes cantidades puede causar efectos laxantes.' },
+      'en:e966': { level: 'baja', note: 'Lactitol. Un edulcorante de carga y agente de volumen. Es un poliol que, en exceso, puede tener efectos laxantes.' },
+      'en:e968': { level: 'baja', note: 'Eritritol. Un edulcorante natural que se encuentra en frutas. No tiene calorías y no afecta los niveles de glucosa en sangre, pero un consumo excesivo puede causar malestar digestivo.' },
       'en:e1414': { level: 'baja', note: 'Almidón modificado. Espesante y estabilizante. Proviene del almidón de maíz o patata, es un derivado natural, generalmente considerado seguro.' },
     };
 
@@ -412,7 +454,7 @@
     const nutriBadge = g => g ? `Nutri-Score ${('' + g).toUpperCase()}` : '';
     const novaBadge = n => n ? `NOVA ${n}` : '';
 
-function computeHealthScore(p) {
+    function computeHealthScore(p) {
       const N = p.nutriments || {};
       const sugars = N.sugars_100g ?? N.sugars ?? null;
       const sat = N['saturated-fat_100g'] ?? N['saturated-fat'] ?? null;
@@ -530,27 +572,31 @@ function computeHealthScore(p) {
 
       score = clamp(Math.round(score * 10) / 10, 1, 10);
       let label = 'Mejor evitar';
-      if (score >= 8) label = 'Excelente para consumo habitual';
-      else if (score >= 6) label = 'Aceptable / consumo moderado';
+      if (score >= 8) label = 'Excelente para consumir';
+      else if (score >= 6) label = 'Consumo moderado';
       else if (score >= 4) label = 'Ocasional';
 
       return { score, label, sugars, sat, salt, fiber, protein, nova, reasons };
     }
 
     function updateUI(p, s) {
+
       // Score section
+      document.getElementById('result-container').style.display = 'block';
       const scoreEl = $('#score');
-      scoreEl.textContent = s.score.toFixed(1);
+      const score = s.score.toFixed(1);
+      scoreEl.textContent = score;
       scoreEl.classList.remove('bad', 'ok', 'good');
       scoreEl.classList.add(gradeColor(s.score));
       $('#scoreLabel').textContent = s.label;
       $('#scoreBar').style.width = percentBar(s.score);
-      $('#sugars').textContent = s.sugars != null ? `${fmt(s.sugars)} g` : '—';
-      $('#sats').textContent = s.sat != null ? `${fmt(s.sat)} g` : '—';
-      $('#salt').textContent = s.salt != null ? `${fmt(s.salt)} g` : '—';
+      
       $('#nutri').textContent = p.nutriscore_grade || p.nutrition_grades || p.nutrition_grade_fr || '—';
       $('#nova').textContent = p.nova_group || p.nova_groups || '—';
       $('#additivesCount').textContent = (p.additives_tags || []).length;
+      $('#sugars').textContent = fmt(s.sugars) + ' g';
+      $('#sats').textContent = fmt(s.sat) + ' g';
+      $('#salt').textContent = fmt(s.salt) + ' g';
 
       // Product basics
       $('#title').textContent = p.product_name_es || p.product_name || 'Producto sin nombre';
@@ -588,7 +634,7 @@ function computeHealthScore(p) {
         N.salt_100g != null ? `Sal: ${fmt(N.salt_100g)} g` : (N.sodium_100g != null ? `Sodio: ${fmt(N.sodium_100g)} g` : null)
       ].filter(Boolean).join(' · ');
 
-    // Additives
+      // Additives
       const list = $('#additivesList');
       list.innerHTML = '';
       const tags = p.additives_tags || [];
@@ -635,13 +681,29 @@ function computeHealthScore(p) {
 
       // Reasons
       const reasonsBox = $('#reasons');
+      const warningMessageDiv = $('#warning-message');
       reasonsBox.innerHTML = '';
-      if (!s.reasons.length) {
-        reasonsBox.innerHTML = '<div class="muted">—</div>';
+      
+      const ingredientWarning = (!p.ingredients_text_es && !p.ingredients_text);
+      if (ingredientWarning) {
+        warningMessageDiv.style.display = 'block';
+        warningMessageDiv.textContent = '⚠️ Nota basada en datos incompletos. No se han encontrado ingredientes para este producto. La puntuación podría no ser precisa.';
       } else {
-        s.reasons.forEach(x => reasonsBox.insertAdjacentHTML('beforeend', `<div class="pill small">${x}</div>`));
+        warningMessageDiv.style.display = 'none';
       }
       
+      if (s.reasons.length > 0) {
+        s.reasons.forEach(reason => {
+          const li = document.createElement('li');
+          li.textContent = reason;
+          reasonsBox.appendChild(li);
+        });
+      } else {
+        const li = document.createElement('li');
+        li.textContent = 'Sin penalizaciones o bonificaciones específicas.';
+        reasonsBox.appendChild(li);
+      }
+
       // Debug
       const debugData = {
         product: { code: p.code, name: p.product_name, nutri: g, nova: n },
@@ -763,7 +825,6 @@ function computeHealthScore(p) {
       navigator.clipboard.writeText(text);
       alert('Resumen copiado al portapapeles. ✅');
     };
-
     // Carga el historial al iniciar la página
     document.addEventListener('DOMContentLoaded', loadSearchHistory);
   </script>
