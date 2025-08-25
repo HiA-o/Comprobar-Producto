@@ -67,29 +67,10 @@ Abre el archivo index.html en un navegador.<br>
 Consultas con `mode: "cors"` para compatibilidad con navegadores.  
 
 ### 📈 Heurística de puntuación
-- **Puntuación base**: 10  
-- **Penalizaciones**:  
-  - NOVA (grado de procesado) → hasta -3.0
-  - Nutri-Score D/E → hasta -2.0
-  - Azúcares → hasta -3.5 
-  - Grasas saturadas → hasta -2.5
-  - Grasas trans → -4.0 (si las contiene)
-  - Sal → hasta -2.2
-  - Aditivos → penalización por cantidad y riesgo.
-  - Aromas sin fruta → hasta -0.8
-  - Alto valor calórico → hasta -1.0
-  - 0% de fruta/verdura/nueces → -0.8
-  - Alcohol → -2.0
-  - Cafeína → -1.0
-- **Bonificaciones**:  
-  - Nutri-Score A/B → hasta +1.2
-  - Energía muy baja (≤50 kcal) → +0.5
-  - Fibra → hasta +1.0
-  - Proteína → hasta +0.5
-  - Buena proporción de FVH (frutas, verduras, frutos secos) → +0.6
-  - Sin azúcares → +0.4
-  - Grasas saturadas muy bajas (<1g) → +0.2
-  - Micronutrientes (Calcio, Hierro, Vitamina C/D) → hasta +0.8
+- **Puntuación base**: 10
+- **Penalizaciones (reducciones de nota)**: azúcares, grasas saturadas, sal, calorías excesivas, ultraprocesado (NOVA 4), aditivos controvertidos, alcohol, cafeína, etc.
+- **Bonificaciones (incrementos de nota)**: fibra, proteínas, presencia de frutas/verduras/nueces, micronutrientes, baja sal, bajo azúcar, etc.
+- **Rango final**: entre 1 (muy poco saludable) y 10 (excelente para consumo habitual).
 
 👉 **Rango final**: de 1 a 10  
 
