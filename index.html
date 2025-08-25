@@ -428,13 +428,14 @@ function computeHealthScore(p) {
 
       // Penalizaciones y bonificaciones
       if (nova) {
-        if (nova == 4) { score -= 3.0; reasons.push('NOVA 4 (ultraprocesado) → -3.0'); }
+        if (nova == 4) { score -= 3.0; reasons.push(`NOVA 4 (ultraprocesado) → -3.0`); }
         else if (nova == 3) { score -= 1.8; reasons.push('NOVA 3 (procesado) → -1.8'); }
       }
       if (sugars != null) {
-        if (sugars > 12) { score -= 3.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g (muy alto >12g) → -3.5`); }
-        else if (sugars > 8) { score -= 2.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g (alto >8g) → -2.5`); }
-        else if (sugars > 5) { score -= 1.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g (medio >5g) → -1.5`); }
+        if (sugars > 30) { score -= 4.0; reasons.push(`Azúcar ${fmt(sugars)} g/100g (muy muy alto >30g) → -4.0`); }
+        else if (sugars > 12) { score -= 3.0; reasons.push(`Azúcar ${fmt(sugars)} g/100g (muy alto >12g) → -3.0`); }
+        else if (sugars > 8) { score -= 2.0; reasons.push(`Azúcar ${fmt(sugars)} g/100g (alto >8g) → -2.0`); }
+        else if (sugars > 5) { score -= 1.0; reasons.push(`Azúcar ${fmt(sugars)} g/100g (medio >5g) → -1.0`); }
         else if (sugars > 2) { score -= 0.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g (bajo >2g) → -0.5`); }
         else if (sugars === 0) { score += 0.4; reasons.push('Sin azúcares → +0.4'); }
       }
@@ -449,14 +450,16 @@ function computeHealthScore(p) {
         reasons.push(`Grasas trans (${fmt(trans)} g/100g) → -4.0`);
       }
       if (salt != null) {
-        if (salt > 1.5) { score -= 2.2; reasons.push(`Sal ${fmt(salt)} g/100g (muy alta >1.5g) → -2.2`); }
-        else if (salt > 0.9) { score -= 1.3; reasons.push(`Sal ${fmt(salt)} g/100g (alta >0.9g) → -1.3`); }
+        if (salt > 2) { score -= 2.5; reasons.push(`Sal ${fmt(salt)} g/100g (muy muy alta >2g) → -2.5`); }
+        else if (salt > 1.5) { score -= 2.0; reasons.push(`Sal ${fmt(salt)} g/100g (muy alta >1.5g) → -2.0`); }
+        else if (salt > 0.9) { score -= 1.2; reasons.push(`Sal ${fmt(salt)} g/100g (alta >0.9g) → -1.2`); }
         else if (salt > 0.6) { score -= 0.4; reasons.push(`Sal ${fmt(salt)} g/100g (media >0.6g) → -0.4`); }
         else if (salt < 0.12) { score += 0.2; reasons.push('Sal muy baja (<0.12g) → +0.2'); }
       }
       if (kcal != null) {
-        if (kcal > 400) { score -= 1.0; reasons.push(`Alto valor calórico (${fmt(kcal)} kcal/100g) → -1.0`); }
-        else if (kcal > 300) { score -= 0.5; reasons.push(`Valor calórico elevado (${fmt(kcal)} kcal/100g) → -0.5`); }
+        if (kcal > 500) { score -= 1.5; reasons.push(`Alto valor calórico (${fmt(kcal)} kcal/100g) → -1.5`); }
+        else if (kcal > 400) { score -= 1.0; reasons.push(`Valor calórico elevado (${fmt(kcal)} kcal/100g) → -1.0`); }
+        else if (kcal > 300) { score -= 0.5; reasons.push(`Valor calórico medio (${fmt(kcal)} kcal/100g) → -0.5`); }
         else if (kcal <= 50) { score += 0.5; reasons.push(`Energía muy baja (${fmt(kcal)} kcal) → +0.5`); }
       }
       if (fiber != null) {
@@ -521,7 +524,7 @@ function computeHealthScore(p) {
       const nutriGrade = p.nutriscore_grade || p.nutrition_grades || p.nutrition_grade_fr || null;
       if (nutriGrade) {
         const g = ('' + nutriGrade).toLowerCase();
-        const adj = { 'a': +1.2, 'b': +0.8, 'c': -1.0, 'd': -1.5, 'e': -2.0 }[g];
+        const adj = { 'a': +1.2, 'b': +0.8, 'c': -1.0, 'd': -2.0, 'e': -3.0 }[g];
         if (adj) { score += adj; reasons.push(`Nutri-Score ${g.toUpperCase()} → ${adj > 0 ? '+' : ''}${adj}`); }
       }
 
