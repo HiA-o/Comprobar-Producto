@@ -235,6 +235,30 @@
       max-height: 300px;
       overflow-y: auto;
     }
+    .history-btn {
+      background: #1e2a52;
+      border: 1px solid #2a3a6d;
+      color: #e5eef7;
+      font-weight: 400;
+      font-size: 0.9rem;
+      padding: 0.5rem 0.8rem;
+      border-radius: 0.75rem;
+      cursor: pointer;
+      transition: background 0.2s;
+      flex-shrink: 0;
+    }
+    .history-btn:hover {
+      background: #253567;
+    }
+    .history-container {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+    .history-container.empty {
+        display: none;
+    }
   </style>
 </head>
 <body>
@@ -255,6 +279,9 @@
           <button id="demoYogurt" class="ghost">Probar con Yogur 🍓</button>
           <button id="demoNatillas" class="ghost">Probar con Natillas 🍮</button>
           <button id="demoGalletas" class="ghost">Probar con Galletas 🍪</button>
+        </div>
+        <div id="history" class="history-container empty">
+          <div class="muted" style="font-size:0.8rem; margin-right:0.5rem;">Historial reciente:</div>
         </div>
       </div>
       <div class="card">
@@ -310,7 +337,7 @@
         <summary class="tiny">Depuración (detalles técnicos)</summary>
         <pre class="notes" id="debug">—</pre>
       </details>
-      <p class="foot">Fuente de datos: Open Food Facts (API pública). Esta app no almacena nada. · <a href="faq.html" style="color:var(--muted); text-decoration:underline;">Preguntas frecuentes y metodología</a></p>
+      <p class="foot">Fuente de datos: Open Food Facts (API pública). Esta herramienta no almacena nada. · <a href="faq.html" style="color:var(--muted); text-decoration:underline;">Preguntas frecuentes y metodología</a></p>
     </section>
   </main>
   <script>
@@ -319,53 +346,52 @@
     const clamp = (x, a, b) => Math.min(Math.max(x, a), b);
 
     // --- BASE DE DATOS MEJORADA DE ADITIVOS CON NOTAS ---
-const controversial = {
-  'en:e100': { level: 'baja', note: 'Colorante (curcumina). Generalmente seguro, puede interactuar con algunos antibióticos.' },
-  'en:e102': { level: 'alta', note: 'Tartrazina. Colorante amarillo sintético. Se ha asociado con hiperactividad en niños y puede causar alergias.' },
-  'en:e104': { level: 'alta', note: 'Amarillo de quinoleína. Colorante sintético. Prohibido en varios países por su relación con alergias e hiperactividad.' },
-  'en:e110': { level: 'alta', note: 'Amarillo ocaso. Colorante sintético. Vinculado a hiperactividad en niños y reacciones alérgicas. Prohibido en algunos países.' },
-  'en:e120': { level: 'media', note: 'Cochinilla. Colorante rojo de origen animal. Puede causar alergias y asma en personas sensibles.' },
-  'en:e122': { level: 'alta', note: 'Azorrubina. Colorante sintético rojo. Se ha asociado con hiperactividad infantil y asma.' },
-  'en:e124': { level: 'alta', note: 'Rojo cochinilla A. Colorante sintético. Vinculado a la hiperactividad en niños y urticaria.' },
-  'en:e129': { level: 'alta', note: 'Rojo allura AC. Colorante sintético. Asociado con hiperactividad en niños. Prohibido en varios países de Europa.' },
-  'en:e131': { level: 'alta', note: 'Azul patentado V. Colorante sintético. Potencialmente alergénico.' },
-  'en:e132': { level: 'media', note: 'Indigotina. Colorante sintético. Puede causar alergias y náuseas.' },
-  'en:e133': { level: 'media', note: 'Azul brillante FCF. Colorante sintético. Se asocia con alergias y posible hiperactividad.' },
-  'en:e150d': { level: 'media', note: 'Colorante (caramelo de sulfito amónico). Se recomienda limitar su consumo.' },
-  'en:e151': { level: 'alta', note: 'Negro brillante BN. Colorante sintético. Prohibido en varios países por sospechas de carcinogenicidad.' },
-  'en:e160b': { level: 'media', note: 'Colorante (annatto). En raras ocasiones se ha asociado con reacciones alérgicas.' },
-  'en:e160bii': { level: 'media', note: 'Bixina. Subtipo de Annatto. En raras ocasiones se ha asociado con reacciones alérgicas.' },
-  'en:e171': { level: 'alta', note: 'Dióxido de titanio. Colorante blanco. Se ha prohibido en la UE por riesgo genotóxico.' },
-  'en:e202': { level: 'baja', note: 'Sorbato de potasio. Conservante. Generalmente seguro, aunque puede causar reacciones cutáneas.' },
-  'en:e211': { level: 'media', note: 'Benzoato de sodio. Conservante. Puede causar reacciones alérgicas y, combinado con vitamina C, puede generar benceno (carcinógeno).' },
-  'en:e223': { level: 'media', note: 'Conservante (sulfitos). Puede causar reacciones en personas sensibles (alérgicos y asmáticos).' },
-  'en:e250': { level: 'alta', note: 'Nitrito sódico. Conservante en cárnicos curados. Se asocia con la formación de nitrosaminas, que son cancerígenas.' },
-  'en:e251': { level: 'media', note: 'Nitrato sódico. Conservante que se convierte en nitrito en el cuerpo.' },
-  'en:e320': { level: 'alta', note: 'BHA. Antioxidante sintético. Considerado un posible carcinógeno y disruptor endocrino.' },
-  'en:e321': { level: 'alta', note: 'BHT. Antioxidante sintético. Considerado un posible carcinógeno y disruptor endocrino.' },
-  'en:e322': { level: 'baja', note: 'Lecitina. Emulsionante de origen natural (soja, girasol, huevo). Generalmente seguro, aunque las personas alérgicas a la soja o el huevo deben verificar la fuente.' },
-  'en:e322i': { level: 'baja', note: 'Lecitina. Emulsionante de origen natural. Variante de E322, con propiedades y riesgos idénticos. Generalmente considerado seguro.' },
-  'en:e331': { level: 'baja', note: 'Citrato de sodio. Regulador de acidez y antioxidante. Generalmente considerado seguro.' },
-  'en:e331iii': { level: 'baja', note: 'Citrato trisódico. Regulador de acidez y conservante. Generalmente considerado seguro.' },
-  'en:e407': { level: 'alta', note: 'Carragenanos. Espesante controvertido. Algunos estudios lo asocian con inflamación intestinal.' },
-  'en:e412': { level: 'baja', note: 'Goma guar. Espesante. Generalmente seguro, pero en grandes cantidades puede causar malestar intestinal.' },
-  'en:e415': { level: 'baja', note: 'Goma xantana. Espesante y estabilizante. Generalmente considerado seguro.' },
-  'en:e450': { level: 'media', note: 'Difosfatos. Emulsionantes y estabilizantes. Se usan para mejorar la textura de quesos o embutidos. Su consumo en exceso puede interferir con la absorción de calcio.' },
-  'en:e466': { level: 'baja', note: 'Carboximetilcelulosa. Espesante. Puede afectar a la flora intestinal y se asocia con inflamación en algunos estudios.' },
-  'en:e471': { level: 'baja', note: 'Mono y diglicéridos de ácidos grasos. Emulsionante. Se utiliza en productos de panadería, helados y margarinas. Generalmente considerados seguros.' },
-  'en:e472e': { level: 'baja', note: 'Ésteres de monoglicéridos y diglicéridos de ácidos grasos. Emulsionante. Se usa para mejorar la textura de los alimentos. Considerado seguro para el consumo humano.' },
-  'en:e500': { level: 'baja', note: 'Bicarbonato de sodio. Agente leudante. Generalmente seguro, pero personas con dietas bajas en sodio o problemas renales deben moderar su consumo.' },
-  'en:e503': { level: 'baja', note: 'Carbonato de amonio. Agente leudante. Considerado seguro ya que se descompone completamente durante el horneado y no deja residuos en el producto final.' },
-  'en:e621': { level: 'media', note: 'Glutamato monosódico (MSG). Potenciador del sabor. Se ha relacionado con el "síndrome del restaurante chino" y efectos en personas sensibles.' },
-  'en:e627': { level: 'media', note: 'Guanilato disódico. Potenciador del sabor. Su consumo debe ser moderado.' },
-  'en:e631': { level: 'media', note: 'Inosinato disódico. Potenciador del sabor. No apto para veganos ni vegetarianos.' },
-  'en:e950': { level: 'media', note: 'Acesulfamo K. Edulcorante artificial. Considerado seguro por la mayoría de las agencias de salud.' },
-  'en:e951': { level: 'media', note: 'Aspartamo. Edulcorante artificial. Genera controversia, pero ha sido considerado seguro por la EFSA.' },
-  'en:e954': { level: 'media', note: 'Sacarina. Edulcorante artificial.' },
-  'en:e955': { level: 'media', note: 'Sucralosa. Edulcorante artificial. Genera debate, pero ha sido considerada segura por las principales autoridades sanitarias. Se recomienda un consumo moderado.' },
-  'en:e1414': { level: 'baja', note: 'Almidón modificado. Espesante y estabilizante. Proviene del almidón de maíz o patata, es un derivado natural, generalmente considerado seguro.' },
-
-};
+    const controversial = {
+      'en:e100': { level: 'baja', note: 'Colorante (curcumina). Generalmente seguro, puede interactuar con algunos antibióticos.' },
+      'en:e102': { level: 'alta', note: 'Tartrazina. Colorante amarillo sintético. Se ha asociado con hiperactividad en niños y puede causar alergias.' },
+      'en:e104': { level: 'alta', note: 'Amarillo de quinoleína. Colorante sintético. Prohibido en varios países por su relación con alergias e hiperactividad.' },
+      'en:e110': { level: 'alta', note: 'Amarillo ocaso. Colorante sintético. Vinculado a hiperactividad en niños y reacciones alérgicas. Prohibido en algunos países.' },
+      'en:e120': { level: 'media', note: 'Cochinilla. Colorante rojo de origen animal. Puede causar alergias y asma en personas sensibles.' },
+      'en:e122': { level: 'alta', note: 'Azorrubina. Colorante sintético rojo. Se ha asociado con hiperactividad infantil y asma.' },
+      'en:e124': { level: 'alta', note: 'Rojo cochinilla A. Colorante sintético. Vinculado a la hiperactividad en niños y urticaria.' },
+      'en:e129': { level: 'alta', note: 'Rojo allura AC. Colorante sintético. Asociado con hiperactividad en niños. Prohibido en varios países de Europa.' },
+      'en:e131': { level: 'alta', note: 'Azul patentado V. Colorante sintético. Potencialmente alergénico.' },
+      'en:e132': { level: 'media', note: 'Indigotina. Colorante sintético. Puede causar alergias y náuseas.' },
+      'en:e133': { level: 'media', note: 'Azul brillante FCF. Colorante sintético. Se asocia con alergias y posible hiperactividad.' },
+      'en:e150d': { level: 'media', note: 'Colorante (caramelo de sulfito amónico). Se recomienda limitar su consumo.' },
+      'en:e151': { level: 'alta', note: 'Negro brillante BN. Colorante sintético. Prohibido en varios países por sospechas de carcinogenicidad.' },
+      'en:e160b': { level: 'media', note: 'Colorante (annatto). En raras ocasiones se ha asociado con reacciones alérgicas.' },
+      'en:e160bii': { level: 'media', note: 'Bixina. Subtipo de Annatto. En raras ocasiones se ha asociado con reacciones alérgicas.' },
+      'en:e171': { level: 'alta', note: 'Dióxido de titanio. Colorante blanco. Se ha prohibido en la UE por riesgo genotóxico.' },
+      'en:e202': { level: 'baja', note: 'Sorbato de potasio. Conservante. Generalmente seguro, aunque puede causar reacciones cutáneas.' },
+      'en:e211': { level: 'media', note: 'Benzoato de sodio. Conservante. Puede causar reacciones alérgicas y, combinado con vitamina C, puede generar benceno (carcinógeno).' },
+      'en:e223': { level: 'media', note: 'Conservante (sulfitos). Puede causar reacciones en personas sensibles (alérgicos y asmáticos).' },
+      'en:e250': { level: 'alta', note: 'Nitrito sódico. Conservante en cárnicos curados. Se asocia con la formación de nitrosaminas, que son cancerígenas.' },
+      'en:e251': { level: 'media', note: 'Nitrato sódico. Conservante que se convierte en nitrito en el cuerpo.' },
+      'en:e320': { level: 'alta', note: 'BHA. Antioxidante sintético. Considerado un posible carcinógeno y disruptor endocrino.' },
+      'en:e321': { level: 'alta', note: 'BHT. Antioxidante sintético. Considerado un posible carcinógeno y disruptor endocrino.' },
+      'en:e322': { level: 'baja', note: 'Lecitina. Emulsionante de origen natural (soja, girasol, huevo). Generalmente seguro, aunque las personas alérgicas a la soja o el huevo deben verificar la fuente.' },
+      'en:e322i': { level: 'baja', note: 'Lecitina. Emulsionante de origen natural. Variante de E322, con propiedades y riesgos idénticos. Generalmente considerado seguro.' },
+      'en:e331': { level: 'baja', note: 'Citrato de sodio. Regulador de acidez y antioxidante. Generalmente considerado seguro.' },
+      'en:e331iii': { level: 'baja', note: 'Citrato trisódico. Regulador de acidez y conservante. Generalmente considerado seguro.' },
+      'en:e407': { level: 'alta', note: 'Carragenanos. Espesante controvertido. Algunos estudios lo asocian con inflamación intestinal.' },
+      'en:e412': { level: 'baja', note: 'Goma guar. Espesante. Generalmente seguro, pero en grandes cantidades puede causar malestar intestinal.' },
+      'en:e415': { level: 'baja', note: 'Goma xantana. Espesante y estabilizante. Generalmente considerado seguro.' },
+      'en:e450': { level: 'media', note: 'Difosfatos. Emulsionantes y estabilizantes. Se usan para mejorar la textura de quesos o embutidos. Su consumo en exceso puede interferir con la absorción de calcio.' },
+      'en:e466': { level: 'baja', note: 'Carboximetilcelulosa. Espesante. Puede afectar a la flora intestinal y se asocia con inflamación en algunos estudios.' },
+      'en:e471': { level: 'baja', note: 'Mono y diglicéridos de ácidos grasos. Emulsionante. Se utiliza en productos de panadería, helados y margarinas. Generalmente considerados seguros.' },
+      'en:e472e': { level: 'baja', note: 'Ésteres de monoglicéridos y diglicéridos de ácidos grasos. Emulsionante. Se usa para mejorar la textura de los alimentos. Considerado seguro para el consumo humano.' },
+      'en:e500': { level: 'baja', note: 'Bicarbonato de sodio. Agente leudante. Generalmente seguro, pero personas con dietas bajas en sodio o problemas renales deben moderar su consumo.' },
+      'en:e503': { level: 'baja', note: 'Carbonato de amonio. Agente leudante. Considerado seguro ya que se descompone completamente durante el horneado y no deja residuos en el producto final.' },
+      'en:e621': { level: 'media', note: 'Glutamato monosódico (MSG). Potenciador del sabor. Se ha relacionado con el "síndrome del restaurante chino" y efectos en personas sensibles.' },
+      'en:e627': { level: 'media', note: 'Guanilato disódico. Potenciador del sabor. Su consumo debe ser moderado.' },
+      'en:e631': { level: 'media', note: 'Inosinato disódico. Potenciador del sabor. No apto para veganos ni vegetarianos.' },
+      'en:e950': { level: 'media', note: 'Acesulfamo K. Edulcorante artificial. Considerado seguro por la mayoría de las agencias de salud.' },
+      'en:e951': { level: 'media', note: 'Aspartamo. Edulcorante artificial. Genera controversia, pero ha sido considerado seguro por la EFSA.' },
+      'en:e954': { level: 'media', note: 'Sacarina. Edulcorante artificial.' },
+      'en:e955': { level: 'media', note: 'Sucralosa. Edulcorante artificial. Genera debate, pero ha sido considerada segura por las principales autoridades sanitarias. Se recomienda un consumo moderado.' },
+      'en:e1414': { level: 'baja', note: 'Almidón modificado. Espesante y estabilizante. Proviene del almidón de maíz o patata, es un derivado natural, generalmente considerado seguro.' },
+    };
 
     let additivesTaxonomy = null;
     async function loadAdditivesTaxonomy() {
@@ -386,7 +412,7 @@ const controversial = {
     const nutriBadge = g => g ? `Nutri-Score ${('' + g).toUpperCase()}` : '';
     const novaBadge = n => n ? `NOVA ${n}` : '';
 
-    function computeHealthScore(p) {
+function computeHealthScore(p) {
       const N = p.nutriments || {};
       const sugars = N.sugars_100g ?? N.sugars ?? null;
       const sat = N['saturated-fat_100g'] ?? N['saturated-fat'] ?? null;
@@ -402,36 +428,36 @@ const controversial = {
 
       // Penalizaciones y bonificaciones
       if (nova) {
-        if (nova == 4) { score -= 3.0; reasons.push(`NOVA 4 (ultraprocesado) → -3.0`); }
-        else if (nova == 3) { score -= 1.5; reasons.push('NOVA 3 (procesado) → -1.5'); }
-        else if (nova == 2) { score -= 0.5; reasons.push('NOVA 2 (mínimo procesado) → -0.5'); }
+        if (nova == 4) { score -= 3.0; reasons.push('NOVA 4 (ultraprocesado) → -3.0'); }
+        else if (nova == 3) { score -= 1.8; reasons.push('NOVA 3 (procesado) → -1.8'); }
       }
       if (sugars != null) {
-        if (sugars > 12) { score -= 3.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g → -3.5`); }
-        else if (sugars > 8) { score -= 2.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g → -2.5`); }
-        else if (sugars > 5) { score -= 1.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g → -1.5`); }
-        else if (sugars > 2) { score -= 0.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g → -0.5`); }
+        if (sugars > 12) { score -= 3.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g (muy alto >12g) → -3.5`); }
+        else if (sugars > 8) { score -= 2.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g (alto >8g) → -2.5`); }
+        else if (sugars > 5) { score -= 1.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g (medio >5g) → -1.5`); }
+        else if (sugars > 2) { score -= 0.5; reasons.push(`Azúcar ${fmt(sugars)} g/100g (bajo >2g) → -0.5`); }
         else if (sugars === 0) { score += 0.4; reasons.push('Sin azúcares → +0.4'); }
       }
       if (sat != null) {
-        if (sat > 8) { score -= 2.5; reasons.push(`Grasas sat. ${fmt(sat)} g/100g → -2.5`); }
-        else if (sat > 5) { score -= 1.5; reasons.push(`Grasas sat. ${fmt(sat)} g/100g → -1.5`); }
-        else if (sat > 2) { score -= 0.5; reasons.push(`Grasas sat. ${fmt(sat)} g/100g → -0.5`); }
-        else if (sat <= 1) { score += 0.2; reasons.push('Grasas sat. bajas → +0.2'); }
+        if (sat > 8) { score -= 2.5; reasons.push(`Grasas sat. ${fmt(sat)} g/100g (muy alto >8g) → -2.5`); }
+        else if (sat > 5) { score -= 1.5; reasons.push(`Grasas sat. ${fmt(sat)} g/100g (alto >5g) → -1.5`); }
+        else if (sat > 2) { score -= 0.5; reasons.push(`Grasas sat. ${fmt(sat)} g/100g (medio >2g) → -0.5`); }
+        else if (sat <= 1) { score += 0.2; reasons.push('Grasas sat. bajas (<1g) → +0.2'); }
       }
       if (trans != null && trans > 0.5) {
         score -= 4.0;
         reasons.push(`Grasas trans (${fmt(trans)} g/100g) → -4.0`);
       }
       if (salt != null) {
-        if (salt > 1.5) { score -= 2.5; reasons.push(`Sal ${fmt(salt)} g/100g → -2.5`); }
-        else if (salt > 0.9) { score -= 1.5; reasons.push(`Sal ${fmt(salt)} g/100g → -1.5`); }
-        else if (salt > 0.6) { score -= 0.5; reasons.push(`Sal ${fmt(salt)} g/100g → -0.5`); }
-        else if (salt < 0.12) { score += 0.2; reasons.push('Sal muy baja → +0.2'); }
+        if (salt > 1.5) { score -= 2.2; reasons.push(`Sal ${fmt(salt)} g/100g (muy alta >1.5g) → -2.2`); }
+        else if (salt > 0.9) { score -= 1.3; reasons.push(`Sal ${fmt(salt)} g/100g (alta >0.9g) → -1.3`); }
+        else if (salt > 0.6) { score -= 0.4; reasons.push(`Sal ${fmt(salt)} g/100g (media >0.6g) → -0.4`); }
+        else if (salt < 0.12) { score += 0.2; reasons.push('Sal muy baja (<0.12g) → +0.2'); }
       }
       if (kcal != null) {
-        if (kcal > 400) { score -= 1.5; reasons.push(`Alto valor calórico (${fmt(kcal)} kcal/100g) → -1.5`); }
-        else if (kcal > 300) { score -= 0.8; reasons.push(`Valor calórico elevado (${fmt(kcal)} kcal/100g) → -0.8`); }
+        if (kcal > 400) { score -= 1.0; reasons.push(`Alto valor calórico (${fmt(kcal)} kcal/100g) → -1.0`); }
+        else if (kcal > 300) { score -= 0.5; reasons.push(`Valor calórico elevado (${fmt(kcal)} kcal/100g) → -0.5`); }
+        else if (kcal <= 50) { score += 0.5; reasons.push(`Energía muy baja (${fmt(kcal)} kcal) → +0.5`); }
       }
       if (fiber != null) {
         if (fiber >= 6) { score += 1.0; reasons.push('Fibra ≥6 g/100g → +1.0'); }
@@ -446,6 +472,30 @@ const controversial = {
         if (fvn >= 40) { score += 0.6; reasons.push('Buena proporción de FVH → +0.6'); }
         else if (fvn === 0) { score -= 0.8; reasons.push('0% fruta/verdura/nueces → -0.8'); }
       }
+      
+      // Bonificaciones por micronutrientes
+      const micronutrients = {
+        'calcium_100g': 0.08, 'iron_100g': 0.08, 'vitamin-c_100g': 0.08, 'vitamin-d_100g': 0.08
+      };
+      for (const k in micronutrients) {
+        const v = N[k];
+        if (v != null && v >= micronutrients[k]) {
+          const m = k.split('_')[0].replace('-', ' ');
+          score += 0.2;
+          reasons.push(`Contenido significativo de ${m} → +0.2`);
+        }
+      }
+
+      // Penalización por alcohol y cafeína
+      const alcohol = N.alcohol_100g ?? null;
+      const caffeine = N.caffeine_100g ?? null;
+      if (alcohol != null && alcohol > 0) {
+        score -= 2.0; reasons.push(`Contiene alcohol (${fmt(alcohol)}%) → -2.0`);
+      }
+      if (caffeine != null && caffeine > 0) {
+        score -= 1.0; reasons.push(`Contiene cafeína → -1.0`);
+      }
+
 
       const adds = p.additives_tags || [];
       if (adds.length >= 6) { score -= 2.0; reasons.push(`Muchos aditivos (${adds.length}) → -2.0`); }
@@ -471,8 +521,8 @@ const controversial = {
       const nutriGrade = p.nutriscore_grade || p.nutrition_grades || p.nutrition_grade_fr || null;
       if (nutriGrade) {
         const g = ('' + nutriGrade).toLowerCase();
-        const adj = { 'a': '+0.6', 'b': '+0.2', 'c': '-0.6', 'd': '-1.2', 'e': '-1.8' }[g];
-        if (adj) { reasons.push(`Nutri-Score ${g.toUpperCase()} → ${adj}`); }
+        const adj = { 'a': +1.2, 'b': +0.8, 'c': -1.0, 'd': -1.5, 'e': -2.0 }[g];
+        if (adj) { score += adj; reasons.push(`Nutri-Score ${g.toUpperCase()} → ${adj > 0 ? '+' : ''}${adj}`); }
       }
 
       score = clamp(Math.round(score * 10) / 10, 1, 10);
@@ -512,10 +562,16 @@ const controversial = {
       $('#novaBadge').style.display = n ? 'inline-block' : 'none';
       if (n) $('#novaBadge').textContent = novaBadge(n);
 
+      // Etiquetas orgánicas
+      const ecoTags = p.labels_tags || [];
+      const isEco = ecoTags.some(t => t === 'en:organic' || t === 'es:ecologico' || t === 'en:bio');
+      $('#ecoBadge').style.display = isEco ? 'inline-block' : 'none';
+      if (isEco) $('#ecoBadge').textContent = 'Orgánico / Bio';
+
       // Ingredients & nutrients
       const ingredientsText = (p.ingredients_text_es || p.ingredients_text || '—');
-const cleanedIngredients = ingredientsText.replace(/_/g, '');
-$('#ing').textContent = cleanedIngredients;
+      const cleanedIngredients = ingredientsText.replace(/_/g, '');
+      $('#ing').textContent = cleanedIngredients;
       const N = p.nutriments || {};
       $('#nutr').innerHTML = [
         N['energy-kcal_100g'] ? `Energía: ${fmt(N['energy-kcal_100g'])} kcal` : null,
@@ -617,6 +673,40 @@ $('#ing').textContent = cleanedIngredients;
       return j.product;
     }
 
+    function saveSearchHistory(code, name) {
+      let history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+      const newEntry = { code, name };
+      // Elimina la entrada antigua si ya existe
+      history = history.filter(item => item.code !== code);
+      // Añade la nueva entrada al principio
+      history.unshift(newEntry);
+      // Limita el historial a 5 elementos
+      history = history.slice(0, 5);
+      localStorage.setItem('searchHistory', JSON.stringify(history));
+      loadSearchHistory();
+    }
+
+    function loadSearchHistory() {
+      const history = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+      const historyContainer = $('#history');
+      historyContainer.innerHTML = '<div class="muted" style="font-size:0.8rem; margin-right:0.5rem;">Historial reciente:</div>';
+      if (history.length > 0) {
+        historyContainer.classList.remove('empty');
+        history.forEach(item => {
+          const button = document.createElement('button');
+          button.classList.add('history-btn');
+          button.textContent = item.name;
+          button.onclick = () => {
+            $('#input').value = item.code;
+            run(item.code);
+          };
+          historyContainer.appendChild(button);
+        });
+      } else {
+        historyContainer.classList.add('empty');
+      }
+    }
+
     async function run(code) {
       $('#score').textContent = '…';
       $('#scoreLabel').textContent = 'Calculando';
@@ -626,6 +716,7 @@ $('#ing').textContent = cleanedIngredients;
         updateUI(p, s);
         await loadAdditivesTaxonomy();
         updateUI(p, s);
+        saveSearchHistory(p.code, p.product_name_es || p.product_name || p.code);
       } catch (e) {
         alert(e.message || 'Ocurrió un error inesperado.');
         console.error(e);
@@ -669,6 +760,9 @@ $('#ing').textContent = cleanedIngredients;
       navigator.clipboard.writeText(text);
       alert('Resumen copiado al portapapeles. ✅');
     };
+
+    // Carga el historial al iniciar la página
+    document.addEventListener('DOMContentLoaded', loadSearchHistory);
   </script>
 </body>
 </html>
